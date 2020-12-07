@@ -1,1 +1,1 @@
-# AspectBasedSentimentAnalysis_ITA-Project
+# ITA Project
