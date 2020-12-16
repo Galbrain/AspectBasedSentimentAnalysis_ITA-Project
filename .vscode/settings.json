@@ -38,7 +38,7 @@
         "-s",
         "./tests",
         "-p",
-        "*_test.py"
+        "test*.py"
     ],
     "python.envFile": "${workspaceFolder}/.env",
     "[python]": {
