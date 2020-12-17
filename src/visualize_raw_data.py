@@ -21,6 +21,7 @@ def jsonToSeries(path):
             data: ndarray containing strings
     '''
     files = os.listdir(path)
+    files = [item for item in files if item.find('.gitkeep') == -1]
 
     text = []
     # rating = []
@@ -87,4 +88,3 @@ if __name__ == "__main__":
     normalizedData = normalize_files(data)
     mostCommon = mostCommonWords(normalizedData, 20)
     plotCommonWords(mostCommon)
-    print('\u00e4')
