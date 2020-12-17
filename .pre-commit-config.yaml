@@ -30,7 +30,7 @@ repos:
           build|
           dist"""
 
-      language_version: python3.7
+      language_version: python3.9
 
 # flake8
 - repo: https://gitlab.com/pycqa/flake8

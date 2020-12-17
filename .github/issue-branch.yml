@@ -1,0 +1,7 @@
+autoCloseIssue: true
+branches:
+    - label: 
+        - bug
+        - documentation
+        - feature
+      name: develop
