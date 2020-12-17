@@ -17,5 +17,5 @@ if __name__ == "__main__":
     )
 
     # exemplify how to access environment variables
-    print("\nEnvironment variable: {}".format(os.environ["TEST_PW"]))
-    print("In production never print password to console! :)\n")
+    # print("\nEnvironment variable: {}".format(os.environ["TEST_PW"]))
+    # print("In production never print password to console! :)\n")
