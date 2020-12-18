@@ -110,18 +110,18 @@ def plotWordCloud(series):
 
 
 def plotEntities(series):
-    nlp = spacy.load('de_core_news_sm')
+    nlp = spacy.load("de_core_news_sm")
     reviews = seriesToFlatArray(series)[:30000]
 
     df_entities = []
-    doc = nlp(' '.join(reviews))
+    doc = nlp(" ".join(reviews))
     for ent in doc.ents:
-        df_entities.append(
-            {'entitytext': ent.text, 'entitiylabel': ent.label_})
+        df_entities.append({"entitytext": ent.text, "entitiylabel": ent.label_})
 
     df_entities = pd.DataFrame(df_entities)
-    df_entities_grouped = df_entities.groupby(
-        ['entitiylabel'])['entitytext'].apply(list)
+    df_entities_grouped = df_entities.groupby(["entitiylabel"])["entitytext"].apply(
+        list
+    )
     print(df_entities_grouped)
 
 
