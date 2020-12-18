@@ -5,8 +5,10 @@ import time
 import requests
 from bs4 import BeautifulSoup
 from selenium import webdriver
-from selenium.common.exceptions import (ElementClickInterceptedException,
-                                        NoSuchElementException)
+from selenium.common.exceptions import (
+    ElementClickInterceptedException,
+    NoSuchElementException,
+)
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
@@ -14,7 +16,6 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 
 class WebScraper:
-
     def __init__(self, urls):
 
         self.urls = urls
@@ -27,7 +28,7 @@ class WebScraper:
         driver = self.driver
         driver.get(url)
 
-        soup = BeautifulSoup(driver.page_source, 'html.parser')
+        soup = BeautifulSoup(driver.page_source, "html.parser")
 
         iframes_size = len(driver.find_elements_by_xpath("//iframe"))
 
@@ -44,7 +45,7 @@ class WebScraper:
                 continue
             break
 
-        title = soup.find('h1').get_text()
+        title = soup.find("h1").get_text()
         while True:
             try:
                 button = driver.find_element_by_partial_link_text("weitere Artikel")
@@ -54,10 +55,10 @@ class WebScraper:
                     button_path = "//span[@class='chevron-down']"
                     button = driver.find_element_by_xpath(button_path)
                 except NoSuchElementException:
-                    print('except')
+                    print("except")
                     break
 
-            soup = BeautifulSoup(driver.page_source, 'html.parser')
+            soup = BeautifulSoup(driver.page_source, "html.parser")
             try:
                 button.click()
             except ElementClickInterceptedException:
@@ -66,50 +67,50 @@ class WebScraper:
                 button = driver.find_element_by_xpath(button_path)
                 button.click()
 
-        opinions_tags = soup.find_all('div', class_='collapse')
+        opinions_tags = soup.find_all("div", class_="collapse")
 
         review_summaries = list()
 
         for opinion_tag in opinions_tags:
 
             stars = dict()
-            for i, aspect in enumerate(opinion_tag.find_all('dt')):
-                stars_container = opinion_tag.find_all('dd')
-                stars_amount1 = len(stars_container[i].find_all('i', class_='fa-star'))
+            for i, aspect in enumerate(opinion_tag.find_all("dt")):
+                stars_container = opinion_tag.find_all("dd")
+                stars_amount1 = len(stars_container[i].find_all("i", class_="fa-star"))
                 stars_amount2 = len(
-                    stars_container[i].find_all(
-                        'img', class_='stiDetailratingStarOn'))
+                    stars_container[i].find_all("img", class_="stiDetailratingStarOn")
+                )
                 stars_amount = max(stars_amount1, stars_amount2)
-                stars[aspect.get_text().strip(':')] = stars_amount
+                stars[aspect.get_text().strip(":")] = stars_amount
 
-            dls = opinion_tag.find_all('dl')
+            dls = opinion_tag.find_all("dl")
             for dl in dls:
                 dl.decompose()
 
-            review_summary = {'text': opinion_tag.get_text(), 'rating': stars}
+            review_summary = {"text": opinion_tag.get_text(), "rating": stars}
             review_summaries.append(review_summary)
 
-        results = {'title': title, 'reviews': review_summaries}
+        results = {"title": title, "reviews": review_summaries}
         return results
 
     def start_scraping(self):
         for url in urls:
             page_data = self.scrape_page(url)
-            title = page_data['title'].replace('\n', '')
+            title = page_data["title"].replace("\n", "")
             out = json.dumps(page_data)
-            with open('./data/raw/'+title+'.json', 'w') as doc:
+            with open("./data/raw/" + title + ".json", "w") as doc:
                 doc.write(out)
             self.data.append(page_data)
 
     def store_data(self):
         for source in self.data:
             out = json.dumps(source)
-            title = source['title'].replace('\n', '')
-            with open('./data/raw/' + title + '.json', 'w') as doc:
+            title = source["title"].replace("\n", "")
+            with open("./data/raw/" + title + ".json", "w") as doc:
                 doc.write(out)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     urls = [
         "https://www.spieletipps.de/game/dead-space/#meinungen",
         "https://www.spieletipps.de/game/dead-space-2/#meinungen",
@@ -156,7 +157,8 @@ if __name__ == '__main__':
         "https://www.spieletipps.de/game/dmc-devil-may-cry/#meinungen",
         "https://www.spieletipps.de/game/halo-4/#meinungen",
         "https://www.spieletipps.de/game/gothic/#meinungen",
-        "https://www.spieletipps.de/game/minecraft/#meinungen"]
+        "https://www.spieletipps.de/game/minecraft/#meinungen",
+    ]
 
     web_scraper = WebScraper(urls)
 
