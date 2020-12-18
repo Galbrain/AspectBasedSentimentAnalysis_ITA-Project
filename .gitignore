@@ -27,3 +27,5 @@ TODO.md
 # data
 src/data/*
 !src/data/.gitkeep
+!src/data/raw/.gitkeep
+!src/data/pictures/*.png
