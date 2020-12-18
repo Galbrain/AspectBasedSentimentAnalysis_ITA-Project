@@ -16,46 +16,46 @@ from wordcloud import WordCloud
 
 # load data
 def jsonToSeries(path):
-    '''
-        in:
-            path: string to folder containing json files
-        out:
-            data: ndarray containing strings
-    '''
+    """
+    in:
+        path: string to folder containing json files
+    out:
+        data: ndarray containing strings
+    """
     files = os.listdir(path)
-    files = [item for item in files if item.find('.gitkeep') == -1]
+    files = [item for item in files if item.find(".gitkeep") == -1]
 
     text = []
     # rating = []
     for singlefile in files:
-        with open(path + '/' + singlefile, 'r') as f:
+        with open(path + "/" + singlefile, "r") as f:
             json_file = json.load(f)
-            reviews = json_file['reviews']
+            reviews = json_file["reviews"]
             for review in reviews:
-                if (review['rating'] != {}):
-                    text.append(review['text'])
+                if review["rating"] != {}:
+                    text.append(review["text"])
             # text.append([json_file['reviews']['text']])
     return pd.Series(text)
 
 
 def normalize_files(series):
-    '''
-        in:
-            series: panda series containing the text data
-        out:
-            series: normalized panda series
-    '''
+    """
+    in:
+        series: panda series containing the text data
+    out:
+        series: normalized panda series
+    """
     # strip beginning and end of Review
     # "Von %USERNAME% (int):
     # "Ist diese Meinung hilfreich?" "INT von INT Lesern fanden diese Meinung hilfreich. Was denkst du?"
-    series = series.str.replace('\n', '')
+    series = series.str.replace("\n", "")
 
-    specialCharMap = {ord('ä'): 'ae', ord('ü'): 'ue', ord('ö'): 'oe', ord('ß'): 'ss'}
+    specialCharMap = {ord("ä"): "ae", ord("ü"): "ue", ord("ö"): "oe", ord("ß"): "ss"}
     series = series.apply(lambda x: x.translate(specialCharMap))
-    series = series.str.replace('Von\s\w+\s+(\(\d+\))?:', '')
-    series = series.str.replace('Ist diese Meinung hilfreich\?', '')
-    series = series.str.replace('\d+\s\w+\s\d+(\s\w+)+\.(\s\w+)+\?', '')
-    series = series.str.replace('[^\w\s]', '').str.lower()
+    series = series.str.replace("Von\s\w+\s+(\(\d+\))?:", "")
+    series = series.str.replace("Ist diese Meinung hilfreich\?", "")
+    series = series.str.replace("\d+\s\w+\s\d+(\s\w+)+\.(\s\w+)+\?", "")
+    series = series.str.replace("[^\w\s]", "").str.lower()
     series = series.str.split()
     series = removeStopwords(series)
 
@@ -66,7 +66,8 @@ def removeStopwords(series):
     nlp = spacy.load("de_core_news_sm", disable=["tagger", "parser", "ner"])
     stopwords = nlp.Defaults.stop_words
     return series.apply(
-        lambda x: [word for word in x if(word not in stopwords and word != '')])
+        lambda x: [word for word in x if (word not in stopwords and word != "")]
+    )
 
 
 def seriesToFlatArray(series):
@@ -86,25 +87,34 @@ def mostCommonWords(series, number):
 
 def plotCommonWords(array):
     plt.figure(figsize=(16, 9))
-    plt.xticks(rotation='vertical')
-    plt.bar(array[:, 0], array[:, 1].astype('int'))
-    plt.savefig('src/data/pictures/most_common.png')
+    plt.xticks(rotation="vertical")
+    plt.bar(array[:, 0], array[:, 1].astype("int"))
+    plt.savefig("src/data/pictures/most_common.png")
 
 
 def plotWordCloud(series):
     wordList = seriesToFlatArray(series)
-    wordcloud = WordCloud(
-        max_words=100,
-        max_font_size=60,
-        collocations=False
-    )
+    wordcloud = WordCloud(max_words=100, max_font_size=60, collocations=False)
 
-    spokenWords = ','.join(wordList)
+    spokenWords = ",".join(wordList)
     wordcloud.generate(spokenWords)
     plt.figure(figsize=(16, 9))
-    mlp.rcParams['image.interpolation'] = 'bilinear'
+    mlp.rcParams["image.interpolation"] = "bilinear"
     plt.imshow(wordcloud)
-    plt.savefig('src/data/pictures/word_cloud_graph.png')
+    plt.savefig("src/data/pictures/word_cloud_graph.png")
+
+
+def plotEntities(series):
+    nlp = spacy.load('de_core_news_sm')
+
+    df_entities = pd.DataFrame(columns=['entitytext', 'entitiylabel'])
+    for review in series.tolist():
+        doc = nlp(','.join(review))
+        print(doc)
+        for ent in doc.ents:
+            df_entities.append([ent.text, ent.label_])
+
+    print(df_entities)
 
 
 if __name__ == "__main__":
@@ -113,3 +123,4 @@ if __name__ == "__main__":
     mostCommon = mostCommonWords(normalizedData, 20)
     plotCommonWords(mostCommon)
     plotWordCloud(normalizedData)
+    plotEntities(normalizedData)

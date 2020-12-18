@@ -11,6 +11,7 @@ matplotlib = "*"
 pandas = "*"
 spacy = "*"
 wordcloud = "*"
+black = "*"
 
 [dev-packages]
 
