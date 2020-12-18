@@ -10,6 +10,7 @@ requests = "*"
 matplotlib = "*"
 pandas = "*"
 spacy = "*"
+wordcloud = "*"
 
 [dev-packages]
 

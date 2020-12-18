@@ -6,10 +6,12 @@ import os
 import re
 from collections import Counter
 
+import matplotlib as mlp
 import numpy as np
 import pandas as pd
 import spacy
 from matplotlib import pyplot as plt
+from wordcloud import WordCloud
 
 
 # load data
@@ -48,8 +50,8 @@ def normalize_files(series):
     # "Ist diese Meinung hilfreich?" "INT von INT Lesern fanden diese Meinung hilfreich. Was denkst du?"
     series = series.str.replace('\n', '')
 
-    spcial_char_map = {ord('ä'): 'ae', ord('ü'): 'ue', ord('ö'): 'oe', ord('ß'): 'ss'}
-    series = series.apply(lambda x: x.translate(spcial_char_map))
+    specialCharMap = {ord('ä'): 'ae', ord('ü'): 'ue', ord('ö'): 'oe', ord('ß'): 'ss'}
+    series = series.apply(lambda x: x.translate(specialCharMap))
     series = series.str.replace('Von\s\w+\s+(\(\d+\))?:', '')
     series = series.str.replace('Ist diese Meinung hilfreich\?', '')
     series = series.str.replace('\d+\s\w+\s\d+(\s\w+)+\.(\s\w+)+\?', '')
@@ -67,13 +69,19 @@ def removeStopwords(series):
         lambda x: [word for word in x if(word not in stopwords and word != '')])
 
 
-def mostCommonWords(series, number):
+def seriesToFlatArray(series):
     sentenceList = series.tolist()
     wordList = [item for sublist in sentenceList for item in sublist]
 
+    return wordList
+
+
+def mostCommonWords(series, number):
+    wordList = seriesToFlatArray(series)
     counter = Counter(wordList)
-    top_words = np.array(counter.most_common(number))
-    return top_words
+    topWords = np.array(counter.most_common(number))
+
+    return topWords
 
 
 def plotCommonWords(array):
@@ -83,8 +91,25 @@ def plotCommonWords(array):
     plt.savefig('src/data/pictures/most_common.png')
 
 
+def plotWordCloud(series):
+    wordList = seriesToFlatArray(series)
+    wordcloud = WordCloud(
+        max_words=100,
+        max_font_size=60,
+        collocations=False
+    )
+
+    spokenWords = ','.join(wordList)
+    wordcloud.generate(spokenWords)
+    plt.figure(figsize=(16, 9))
+    mlp.rcParams['image.interpolation'] = 'bilinear'
+    plt.imshow(wordcloud)
+    plt.savefig('src/data/pictures/word_cloud_graph.png')
+
+
 if __name__ == "__main__":
     data = jsonToSeries("src/data/raw")
     normalizedData = normalize_files(data)
     mostCommon = mostCommonWords(normalizedData, 20)
     plotCommonWords(mostCommon)
+    plotWordCloud(normalizedData)
