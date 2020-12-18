@@ -56,6 +56,7 @@ def normalize_files(series):
     series = series.str.replace("Ist diese Meinung hilfreich\?", "")
     series = series.str.replace("\d+\s\w+\s\d+(\s\w+)+\.(\s\w+)+\?", "")
     series = series.str.replace("[^\w\s]", "").str.lower()
+    # series = series.str.replace('ae', 'ä').replace('oe', 'ö').replace('ue', 'ü')
     series = series.str.split()
     series = removeStopwords(series)
 
@@ -65,6 +66,10 @@ def normalize_files(series):
 def removeStopwords(series):
     nlp = spacy.load("de_core_news_sm", disable=["tagger", "parser", "ner"])
     stopwords = nlp.Defaults.stop_words
+
+    specialCharMap = {ord("ä"): "ae", ord("ü"): "ue", ord("ö"): "oe", ord("ß"): "ss"}
+    stopwords = [word.translate(specialCharMap) for word in stopwords]
+
     return series.apply(
         lambda x: [word for word in x if (word not in stopwords and word != "")]
     )
@@ -106,15 +111,18 @@ def plotWordCloud(series):
 
 def plotEntities(series):
     nlp = spacy.load('de_core_news_sm')
+    reviews = seriesToFlatArray(series)[:30000]
 
-    df_entities = pd.DataFrame(columns=['entitytext', 'entitiylabel'])
-    for review in series.tolist():
-        doc = nlp(','.join(review))
-        print(doc)
-        for ent in doc.ents:
-            df_entities.append([ent.text, ent.label_])
+    df_entities = []
+    doc = nlp(' '.join(reviews))
+    for ent in doc.ents:
+        df_entities.append(
+            {'entitytext': ent.text, 'entitiylabel': ent.label_})
 
-    print(df_entities)
+    df_entities = pd.DataFrame(df_entities)
+    df_entities_grouped = df_entities.groupby(
+        ['entitiylabel'])['entitytext'].apply(list)
+    print(df_entities_grouped)
 
 
 if __name__ == "__main__":
@@ -123,4 +131,4 @@ if __name__ == "__main__":
     mostCommon = mostCommonWords(normalizedData, 20)
     plotCommonWords(mostCommon)
     plotWordCloud(normalizedData)
-    plotEntities(normalizedData)
+    # plotEntities(normalizedData)
