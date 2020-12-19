@@ -5,7 +5,6 @@ from src.utils.preprocessing import Preprocessor
 
 
 class PreprocessingTest(unittest.TestCase):
-
     def setUp(self):
         self.preprocessor = Preprocessor("./src/data/raw/")
 
