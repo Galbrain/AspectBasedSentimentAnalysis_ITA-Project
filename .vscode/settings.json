@@ -38,12 +38,13 @@
         "-s",
         "./tests",
         "-p",
-        "test*.py"
+        "*_test.py"
     ],
     "python.envFile": "${workspaceFolder}/.env",
     "[python]": {
         "editor.codeActionsOnSave": {
             "source.organizeImports": true
         }
-    }
+    },
+    "python.pythonPath": "/home/daholli/.local/share/virtualenvs/AspectBasedSentimentAnalysis_ITA-Project-NNdFCPOn/bin/python"
 }
