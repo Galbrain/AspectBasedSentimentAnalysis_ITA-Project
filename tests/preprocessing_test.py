@@ -13,7 +13,7 @@ class PreprocessingTest(unittest.TestCase):
 
     def testNoJsonfiles(self):
         tmpprep = Preprocessor("./")
-        self.assertRaises(Exception, lambda: tmpprep.import_jsons())
+        self.assertRaises(Exception, lambda: tmpprep.find_jsons())
 
 
 if __name__ == "__main__":
