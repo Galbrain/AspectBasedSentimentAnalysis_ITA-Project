@@ -12,10 +12,6 @@
         "LICENSE": true,
         ".coverage": true
     },
-    "[markdown]": {
-        "editor.formatOnSave": true,
-        "editor.defaultFormatter": "shd101wyy.markdown-preview-enhanced"
-    },
     "python.autoComplete.addBrackets": true,
     "python.formatting.provider": "autopep8",
     "python.formatting.autopep8Args": [
@@ -46,5 +42,6 @@
             "source.organizeImports": true
         }
     },
-    "python.pythonPath": "/home/daholli/.local/share/virtualenvs/AspectBasedSentimentAnalysis_ITA-Project-NNdFCPOn/bin/python"
+    "autoDocstring.docstringFormat": "google",
+    "autoDocstring.startOnNewLine": true
 }

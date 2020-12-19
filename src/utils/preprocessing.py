@@ -37,7 +37,7 @@ class Preprocessor:
 
     def find_jsons(self):
         """
-        Import Json files from path
+        find JSON files from path
 
         Raises:
             Exception: No files found
