@@ -3,7 +3,7 @@ import json
 
 
 class Preprocessor:
-    def __init__(self, path: str, lower=True, removeNonAlphaNumeric=True,
+    def __init__(self, path, lower=True, removeNonAlphaNumeric=True,
                  substituespecial=True, lemmanize=False):
         self.path = path
         self.lower = lower
@@ -13,6 +13,8 @@ class Preprocessor:
 
     def import_jsons():
         files = glob.glob(self.path + '*.json')
+        if not files:
+            raise Exception("No JSON files found!")
         return files
 
     def extract_text(file):
@@ -25,6 +27,8 @@ class Preprocessor:
             json_f = json.load(f)
             return pd.Series([review["rating"] for review in json_f['reviews']])
 
-    def normalize()
+    def normalize():
+        pass
 
     def prep():
+        pass
