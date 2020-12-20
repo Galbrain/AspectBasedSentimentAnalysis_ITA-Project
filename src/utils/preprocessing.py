@@ -221,7 +221,7 @@ class Preprocessor:
 
         if self.substituespecial:
             self.stopwords = {
-                word.translate(self.subsitutedict) for word in self.stopwords
+                word.translate(self.substitutedict) for word in self.stopwords
             }
 
         return series.apply(
