@@ -195,25 +195,27 @@ class Preprocessor:
             nlp = spacy.load(model, disable=disableList)
         except OSError:
             spacy.cli.download(model)
-            nlp = spacy.load(model, disable=disableList)
+            return self.loadSpacyModel(model, disableList)
         return nlp
 
     def loadStopwords(self, nlp):
         """
         load the spacy stopword list
         """
-        self.stopwords = nlp.Defaults.stop_words
+        return nlp.Defaults.stop_words
 
-    def removeStopwords(self, series):
+    def removeStopwords(self, series, nlp):
         """
         removes the stopwords from tokenized series
 
         Args:
             series (pd.Series): Series containing tokenized text
+            nlp (Language): Language object with loaded model
 
         Returns:
             pd.Series: tokenized Series without stopwords
         """
+        print(self.loadStopwords(nlp))
 
         if self.substituespecial:
             self.stopwords = [
@@ -254,8 +256,7 @@ class Preprocessor:
 
         if self.rmstopwords:
             nlp = self.loadSpacyModel()
-            self.stopwords = self.loadStopwords(nlp)
             text_tokenized = self.tokenize(text)
-            return self.removeStopwords(text_tokenized)
+            return self.removeStopwords(text_tokenized, nlp)
         else:
             return self.tokenize(text)
