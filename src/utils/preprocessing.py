@@ -202,7 +202,7 @@ class Preprocessor:
         """
         load the spacy stopword list
         """
-        return nlp.Defaults.stop_words
+        self.stopwords = nlp.Defaults.stop_words
 
     def removeStopwords(self, series, nlp):
         """
@@ -215,12 +215,13 @@ class Preprocessor:
         Returns:
             pd.Series: tokenized Series without stopwords
         """
-        print(self.loadStopwords(nlp))
+
+        self.loadStopwords(nlp)
 
         if self.substituespecial:
-            self.stopwords = [
+            self.stopwords = {
                 word.translate(self.subsitutedict) for word in self.stopwords
-            ]
+            }
 
         return series.apply(
             lambda x: [
