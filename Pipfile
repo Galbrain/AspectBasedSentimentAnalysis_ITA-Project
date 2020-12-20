@@ -19,7 +19,7 @@ autopep8 = "*"
 coverage = "*"
 
 [scripts]
-test = "coverage run --include=src/*,tests/* --omit=*/__init__.py -m unittest discover -s tests -p *_test.py"
+test = "coverage run --include=src/*,tests/* --omit=*/__init__.py -m unittest discover -s ./tests -p *_test.py"
 report = "coverage html"
 main = "python ./src/main.py"
 
