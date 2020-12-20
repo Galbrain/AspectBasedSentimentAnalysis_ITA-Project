@@ -160,8 +160,8 @@ class Preprocessor:
         Returns:
             pd.Series: Series containing text with subsituted special characters
         """
-
-        return series.apply(lambda x: x.translate(dict))
+        self.subitutedict = dict
+        return series.apply(lambda x: x.translate(self.subitutedict))
 
     def tokenize(self, series):
         """
@@ -175,11 +175,31 @@ class Preprocessor:
         """
         return series.str.split()
 
-    def loadStopwords(self):
+    def loadSpacyModel(
+        self, model="de_core_news_sm", disableList=["tagger", "parser", "ner"]
+    ):
+        """
+        load the spacy model with required modes
+
+        Args:
+            model (str, optional): name of the mode. Defaults to "de_core_news_sm".
+            disableList (list, optional): list of things to be disabled. Defaults to ["tagger", "parser", "ner"].
+
+        Returns:
+            Language: Language object with the loaded model
+        """
+
+        try:
+            nlp = spacy.load(model, disable=disableList)
+        except OSError:
+            spacy.cli.download(model)
+            nlp = spacy.load(model, disable=disableList)
+        return nlp
+
+    def loadStopwords(self, nlp):
         """
         load the spacy stopword list
         """
-        nlp = spacy.load("de_core_news_sm", disable=["tagger", "parser", "ner"])
         self.stopwords = nlp.Defaults.stop_words
 
     def removeStopwords(self, series):
@@ -194,7 +214,9 @@ class Preprocessor:
         """
 
         if self.substituespecial:
-            self.stopwords = [word.translate(dict) for word in self.stopwords]
+            self.stopwords = [
+                word.translate(self.subsitutedict) for word in self.stopwords
+            ]
 
         return series.apply(
             lambda x: [
