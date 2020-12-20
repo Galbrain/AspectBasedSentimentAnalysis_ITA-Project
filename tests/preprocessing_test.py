@@ -38,7 +38,6 @@ class PreprocessingTest(unittest.TestCase):
             json.dump(self.test_json, f, indent=4)
 
         tmpprep = Preprocessor(self.path)
-        print(tmpprep.prep().tolist())
         self.assertTrue([["testdatei"]] == tmpprep.prep().tolist())
 
     def testPrepNoStopwordRemoval(self):

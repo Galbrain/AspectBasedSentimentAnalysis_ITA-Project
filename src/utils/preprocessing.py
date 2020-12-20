@@ -43,6 +43,7 @@ class Preprocessor:
         self.rmstopwords = rmstopwords
         self.rmdefault = rmdefault
         self.stopwords = {}
+        self.substitutedict = {}
 
     def find_jsons(self):
         """
@@ -162,8 +163,8 @@ class Preprocessor:
         Returns:
             pd.Series: Series containing text with subsituted special characters
         """
-        self.subitutedict = dict
-        return series.apply(lambda x: x.translate(self.subitutedict))
+        self.substitutedict = dict
+        return series.apply(lambda x: x.translate(self.substitutedict))
 
     def tokenize(self, series):
         """
