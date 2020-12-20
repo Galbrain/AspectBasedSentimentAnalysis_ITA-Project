@@ -86,6 +86,7 @@ class Preprocessor:
         Returns:
             pd.Series: returns Series with ratings of the reviews
         """
+
         with open(file, "r") as f:
             json_f = json.load(f)
             return pd.Series([review["rating"] for review in json_f["reviews"]])
@@ -108,7 +109,7 @@ class Preprocessor:
         """
         remove all non alpha numerica characters from the text in series
 
-            Args:
+        Args:
             series (pd.Series): Series containing all text from reviews
 
         Returns:
@@ -163,6 +164,7 @@ class Preprocessor:
         Returns:
             pd.Series: Series containing text with subsituted special characters
         """
+
         self.substitutedict = dict
         return series.apply(lambda x: x.translate(self.substitutedict))
 
@@ -176,6 +178,7 @@ class Preprocessor:
         Returns:
             pd.Series: Series containing array of tokens
         """
+
         return series.str.split()
 
     def loadSpacyModel(
@@ -201,8 +204,12 @@ class Preprocessor:
 
     def loadStopwords(self, nlp):
         """
-        load the spacy stopword list
+        load Stopwords from spacy
+
+        Args:
+            nlp (Language): Language object with loaded model
         """
+
         self.stopwords = nlp.Defaults.stop_words
 
     def removeStopwords(self, series, nlp):
