@@ -74,7 +74,14 @@ class Preprocessor:
 
         with open(file, "r") as f:
             json_f = json.load(f)
-            return pd.Series([review["text"] for review in json_f["reviews"]])
+
+            return pd.Series(
+                [
+                    review["text"]
+                    for review in json_f["reviews"]
+                    if not review["rating"] == {}
+                ]
+            )
 
     def extract_rating(self, file):
         """
