@@ -49,6 +49,15 @@ class PreprocessingTest(unittest.TestCase):
             [["das", "ist", "fuer", "eine", "testdatei"]] == tmpprep.prep().tolist()
         )
 
+    def testLemmanize(self):
+        with open(self.path + "testdata.json", "w") as f:
+            json.dump(self.test_json, f, indent=4)
+
+        tmpprep = Preprocessor(self.path, lemmanize=True, rmstopwords=False)
+        self.assertTrue(
+            [["der", "sein", "fuer", "einen", "testdatei"]] == tmpprep.prep().tolist()
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

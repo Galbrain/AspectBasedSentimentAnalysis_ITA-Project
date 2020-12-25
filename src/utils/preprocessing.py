@@ -44,6 +44,7 @@ class Preprocessor:
         self.rmdefault = rmdefault
         self.stopwords = {}
         self.substitutedict = {}
+        self.nlp = None
 
     def find_jsons(self):
         """
@@ -203,23 +204,24 @@ class Preprocessor:
         """
 
         try:
-            nlp = spacy.load(model, disable=disableList)
+            self.nlp = spacy.load(model, disable=disableList)
         except OSError:
             spacy.cli.download(model)
             return self.loadSpacyModel(model, disableList)
-        return nlp
 
-    def loadStopwords(self, nlp):
+    def loadStopwords(self):
         """
         load Stopwords from spacy
 
         Args:
             nlp (Language): Language object with loaded model
         """
+        if not self.nlp:
+            self.loadSpacyModel()
 
-        self.stopwords = nlp.Defaults.stop_words
+        self.stopwords = self.nlp.Defaults.stop_words
 
-    def removeStopwords(self, series, nlp):
+    def removeStopwords(self, series):
         """
         removes the stopwords from tokenized series
 
@@ -231,7 +233,7 @@ class Preprocessor:
             pd.Series: tokenized Series without stopwords
         """
 
-        self.loadStopwords(nlp)
+        self.loadStopwords()
 
         if self.substituespecial:
             self.stopwords = {
@@ -243,6 +245,25 @@ class Preprocessor:
                 word for word in x if (word not in self.stopwords and word != "")
             ]
         )
+
+    def lemmanizeTokens(self, tokenized_series):
+        """
+        produces a lemmatized version of the tokenized series it was given
+
+        Args:
+            tokenized_series (pd.Series): already tokenized series
+
+        Returns:
+            pd.Series: a lemmanized series
+        """
+        if not self.nlp:
+            self.loadSpacyModel()
+
+        lemmanized_series = tokenized_series.apply(
+            lambda x: [word.lemma_ for word in self.nlp(" ".join(x))]
+        )
+
+        return lemmanized_series
 
     def prep(self):
         """
@@ -270,9 +291,14 @@ class Preprocessor:
         if self.rmdefault:
             text = self.removeDefaultStrings(text)
 
+        text_tokenized = pd.Series(dtype=str)
         if self.rmstopwords:
-            nlp = self.loadSpacyModel()
             text_tokenized = self.tokenize(text)
-            return self.removeStopwords(text_tokenized, nlp)
+            text_tokenized = self.removeStopwords(text_tokenized)
         else:
-            return self.tokenize(text)
+            text_tokenized = self.tokenize(text)
+
+        if self.lemmanize:
+            return self.lemmanizeTokens(text_tokenized)
+        else:
+            return text_tokenized
