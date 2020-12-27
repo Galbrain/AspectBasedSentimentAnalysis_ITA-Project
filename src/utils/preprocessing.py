@@ -206,8 +206,13 @@ class Preprocessor:
             self.nlp = spacy.load(model, disable=disableList)
             return True
         except OSError:
-            spacy.cli.download(model)
+            try:
+                spacy.cli.download(model)
+            except Exception as e:
+                print(e)
+                return False
             self.nlp = spacy.load(model, disable=disableList)
+            return True
 
     def loadStopwords(self) -> bool:
         """
