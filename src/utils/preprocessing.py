@@ -126,7 +126,7 @@ class Preprocessor:
 
         return series.str.replace(r"[^\w\s]", "")
 
-    def removeString(self, series: pd.Series, regstring: str):
+    def removeString(self, series: pd.Series, regstring: str) -> pd.Series:
         """
         remove strings with schema
 
@@ -160,7 +160,12 @@ class Preprocessor:
     def substitueSpecial(
         self,
         series: pd.Series,
-        dict: dict = {ord("ä"): "ae", ord("ü"): "ue", ord("ö"): "oe", ord("ß"): "ss"},
+        transldict: dict = {
+            ord("ä"): "ae",
+            ord("ü"): "ue",
+            ord("ö"): "oe",
+            ord("ß"): "ss",
+        },
     ) -> pd.Series:
         """
         substitue the special characters for text and stopwords with their non utf-8 counterparts
@@ -173,7 +178,7 @@ class Preprocessor:
             series (pd.Series): Series containing text with subsituted special characters
         """
 
-        self.substitutedict = dict
+        self.substitutedict = transldict
         return series.apply(lambda x: x.translate(self.substitutedict))
 
     def tokenize(self, series: pd.Series) -> pd.Series:
