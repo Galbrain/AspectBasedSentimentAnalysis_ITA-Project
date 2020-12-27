@@ -52,10 +52,10 @@ def normalize_files(series):
 
     specialCharMap = {ord("ä"): "ae", ord("ü"): "ue", ord("ö"): "oe", ord("ß"): "ss"}
     series = series.apply(lambda x: x.translate(specialCharMap))
-    series = series.str.replace("Von\s\w+\s+(\(\d+\))?:", "")
-    series = series.str.replace("Ist diese Meinung hilfreich\?", "")
-    series = series.str.replace("\d+\s\w+\s\d+(\s\w+)+\.(\s\w+)+\?", "")
-    series = series.str.replace("[^\w\s]", "").str.lower()
+    series = series.str.replace(r"Von\s\w+\s+(\(\d+\))?:", "")
+    series = series.str.replace(r"Ist diese Meinung hilfreich\?", "")
+    series = series.str.replace(r"\d+\s\w+\s\d+(\s\w+)+\.(\s\w+)+\?", "")
+    series = series.str.replace(r"[^\w\s]", "").str.lower()
     # series = series.str.replace('ae', 'ä').replace('oe', 'ö').replace('ue', 'ü')
     series = series.str.split()
     series = removeStopwords(series)

@@ -16,6 +16,10 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 
 class WebScraper:
+    """
+    Webscraper class
+    """
+
     def __init__(self, urls):
 
         self.urls = urls
@@ -40,7 +44,7 @@ class WebScraper:
                 button = driver.find_element_by_xpath(button_path)
                 button.click()
                 driver.switch_to.default_content()
-            except:
+            except NoSuchElementException:  # TODO: THIS IS PROBABLY WRONG
                 driver.switch_to.default_content()
                 continue
             break
@@ -98,7 +102,7 @@ class WebScraper:
             page_data = self.scrape_page(url)
             title = page_data["title"].replace("\n", "")
             out = json.dumps(page_data)
-            with open("./data/raw/" + title + ".json", "w") as doc:
+            with open("../data/raw/" + title + ".json", "w") as doc:
                 doc.write(out)
             self.data.append(page_data)
 
@@ -106,7 +110,7 @@ class WebScraper:
         for source in self.data:
             out = json.dumps(source)
             title = source["title"].replace("\n", "")
-            with open("./data/raw/" + title + ".json", "w") as doc:
+            with open("../data/raw/" + title + ".json", "w") as doc:
                 doc.write(out)
 
 
