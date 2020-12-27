@@ -99,7 +99,7 @@ class Preprocessor:
             json_f = json.load(f)
             return pd.Series([review["rating"] for review in json_f["reviews"]])
 
-    def removeCapitalization(self, series):
+    def removeCapitalization(self, series: pd.Series) -> pd.Series:
         """
         remove capitalization from the series
 
@@ -113,7 +113,7 @@ class Preprocessor:
         series = series.str.lower()
         return series
 
-    def rmNonAlphaNumeric(self, series: pd.Series):
+    def rmNonAlphaNumeric(self, series: pd.Series) -> pd.Series:
         """
         remove all non alpha numerica characters from the text in series
 
@@ -140,7 +140,7 @@ class Preprocessor:
 
         return series.str.replace(regstring, "")
 
-    def removeDefaultStrings(self, series: pd.Series):
+    def removeDefaultStrings(self, series: pd.Series) -> pd.Series:
         """
         remove default string: Von %USER% (1) :, Ist diese Meinung hilfreich?, INT von INT Lesern fand diese Meinung hilfreich
 
@@ -205,7 +205,8 @@ class Preprocessor:
         try:
             self.nlp = spacy.load(model, disable=disableList)
             return True
-        except OSError:
+        except OSError as oe:
+            print(oe)
             try:
                 spacy.cli.download(model)
             except Exception as e:
@@ -222,7 +223,9 @@ class Preprocessor:
             bool: whenver the function completed successfully
         """
         if not self.nlp:
-            self.loadSpacyModel()
+            if not self.loadSpacyModel():
+                print("Skipping. Unable to load SpacyModel")
+                return False
 
         self.stopwords = self.nlp.Defaults.stop_words
         return True
@@ -238,7 +241,9 @@ class Preprocessor:
             series (pd.Series): tokenized Series without stopwords
         """
 
-        self.loadStopwords()
+        if not self.loadStopwords():
+            print("Skipping. Unable to load Stopwords!")
+            return series
 
         if self.substituespecial:
             self.stopwords = {
@@ -262,7 +267,9 @@ class Preprocessor:
             lemmanized_series (pd.Series): a lemmanized series
         """
         if not self.nlp:
-            self.loadSpacyModel()
+            if not self.loadSpacyModel():
+                print("Skipping. Unable to load Spacy Model")
+                return tokenized_series
 
         lemmanized_series = tokenized_series.apply(
             lambda x: [word.lemma_ for word in self.nlp(" ".join(x))]
@@ -279,6 +286,7 @@ class Preprocessor:
         """
 
         text = pd.Series(dtype=str)
+
         files = self.find_jsons()
 
         for file in files:
