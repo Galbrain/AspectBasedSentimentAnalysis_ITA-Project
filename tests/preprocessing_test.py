@@ -46,7 +46,7 @@ class PreprocessingTest(unittest.TestCase):
 
         tmpprep = Preprocessor(self.path, rmstopwords=False)
         self.assertTrue(
-            [["das", "ist", "fuer", "eine", "testdatei"]] == tmpprep.prep().tolist()
+            [["das", "ist", "für", "eine", "testdatei"]] == tmpprep.prep().tolist()
         )
 
     def testLemmanize(self):
@@ -55,7 +55,7 @@ class PreprocessingTest(unittest.TestCase):
 
         tmpprep = Preprocessor(self.path, lemmanize=True, rmstopwords=False)
         self.assertTrue(
-            [["der", "sein", "fuer", "einen", "testdatei"]] == tmpprep.prep().tolist()
+            [["der", "sein", "für", "einen", "testdatei"]] == tmpprep.prep().tolist()
         )
 
 

@@ -17,7 +17,7 @@ class Preprocessor:
         path,
         lower=True,
         rmnonalphanumeric=True,
-        substituespecial=True,
+        substituespecial=False,
         lemmanize=False,
         rmstopwords=True,
         rmdefault=True,
@@ -142,7 +142,7 @@ class Preprocessor:
 
     def removeDefaultStrings(self, series: pd.Series) -> pd.Series:
         """
-        remove default string: Von %USER% (1) :, Ist diese Meinung hilfreich?, INT von INT Lesern fand diese Meinung hilfreich
+        remove default string: Von %USER% (INT) :, Ist diese Meinung hilfreich?, INT von INT Lesern fand diese Meinung hilfreich
 
         Args:
             series (pd.Series): Series containing text
