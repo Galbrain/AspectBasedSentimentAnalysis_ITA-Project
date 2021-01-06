@@ -29,9 +29,9 @@ class PreprocessingTest(unittest.TestCase):
     def testValidPath(self):
         self.assertTrue(os.path.isdir(self.preprocessor.path))
 
-    def testNoJsonfiles(self):
-        tmpprep = Preprocessor("./")
-        self.assertRaises(Exception, lambda: tmpprep.find_jsons())
+    # def testNoJsonfiles(self):
+    #     tmpprep = Preprocessor("./")
+    #     self.assertRaises(Exception, lambda: tmpprep.find_jsons())
 
     def testPrepDefault(self):
         with open(self.path + "testdata.json", "w") as f:

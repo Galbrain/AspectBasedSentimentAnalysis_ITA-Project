@@ -2,6 +2,7 @@
 import glob
 import json
 import re
+from unittest.main import main
 
 import pandas as pd
 import spacy
@@ -14,13 +15,13 @@ class Preprocessor:
 
     def __init__(
         self,
-        path,
-        lower=True,
-        rmnonalphanumeric=True,
-        substituespecial=False,
-        lemmanize=False,
-        rmstopwords=True,
-        rmdefault=True,
+        path: str = "src/data/raw/",
+        lower: bool = True,
+        rmnonalphanumeric: bool = True,
+        substituespecial: bool = False,
+        lemmanize: bool = False,
+        rmstopwords: bool = True,
+        rmdefault: bool = True,
     ):
         """
         Constructor for Preprocessor class
@@ -45,154 +46,99 @@ class Preprocessor:
         self.stopwords = {}
         self.substitutedict = {}
         self.nlp = None
+        self.normalizeColumn = "text_normalized"
 
-    def find_jsons(self) -> list[str]:
+    def loadCSV(self, filename: str = "data_raw.csv"):
+        df_DataRaw = pd.read_csv(self.path + filename)
+        df_DataRaw.dropna(inplace=True)
+        df_DataRaw[self.normalizeColumn] = df_DataRaw['review_text_raw']
+        self.data = df_DataRaw
+
+    def splitSentences(self) -> bool:
+        self.data['review_text_raw'].str.split(r"")
+        return True
+
+    def removeCapitalization(self) -> bool:
         """
-        find JSON files from path
-
-        Raises:
-            Exception: No files found
+        remove capitalization from self.data[self.normalizeColumn]
 
         Returns:
-            files (list[str]): returns a list with filenames of JSON files
+            bool: Successful execution of command
         """
+        self.data[self.normalizeColumn] = self.data[self.normalizeColumn].str.lower()
+        return True
 
-        files = glob.glob(self.path + "*.json")
-        if not files:
-            raise Exception("No JSON files found!")
-        return files
-
-    def extract_text(self, file: str) -> pd.Series:
+    def rmNonAlphaNumeric(self) -> bool:
         """
-        extract text from reviews in file
-
-        Args:
-            file (str): filename of the file in path
+        removes the non-alpha-numeric characters from self.data['text_normlaized']
 
         Returns:
-            pd.Series: returns Series with text from reviews
+            bool: Sucessful execution of command
         """
 
-        with open(file, "r") as f:
-            json_f = json.load(f)
+        self.data[self.normalizeColumn] = self.data[self.normalizeColumn].str.replace(
+            r"[^\w\s]", "")
 
-            return pd.Series(
-                [
-                    review["text"]
-                    for review in json_f["reviews"]
-                    if not review["rating"] == {}
-                ]
-            )
-
-    def extract_rating(self, file: str):
-        """
-        extract rating from reviews in file
-
-        Args:
-            file (str): filename of the file in path
-
-        Returns:
-            pd.Series: returns Series with ratings of the reviews
-        """
-
-        with open(file, "r") as f:
-            json_f = json.load(f)
-            return pd.Series([review["rating"] for review in json_f["reviews"]])
-
-    def removeCapitalization(self, series: pd.Series) -> pd.Series:
-        """
-        remove capitalization from the series
-
-        Args:
-            series (pd.Series): Series containing all text from reviews
-
-        Returns:
-            series (pd.Series): Series with all lower letters
-        """
-
-        series = series.str.lower()
-        return series
-
-    def rmNonAlphaNumeric(self, series: pd.Series) -> pd.Series:
-        """
-        remove all non alpha numerica characters from the text in series
-
-        Args:
-            series (pd.Series): Series containing all text from reviews
-
-        Returns:
-            series (pd.Series): Series without non alpha numeric text
-        """
-
-        return series.str.replace(r"[^\w\s]", "")
-
-    def removeString(self, series: pd.Series, regstring: str) -> pd.Series:
+    def removeString(self, regstring: str) -> bool:
         """
         remove strings with schema
 
         Args:
-            series (pd.Series): Series containing review text
             regstring (str, optional): string to be removed.
 
         Returns:
-            series (pd.Series): Series with strings Removed
+            bool: Successful execution of command
         """
 
-        return series.str.replace(regstring, "")
+        self.data[self.normalizeColumn] = self.data[self.normalizeColumn].str.replace(
+            regstring, "")
 
-    def removeDefaultStrings(self, series: pd.Series) -> pd.Series:
+    def removeDefaultStrings(self) -> bool:
         """
         remove default string: Von %USER% (INT) :, Ist diese Meinung hilfreich?, INT von INT Lesern fand diese Meinung hilfreich
 
-        Args:
-            series (pd.Series): Series containing text
-
         Returns:
-            series (pd.Series): Series without the most common phrased generated by the website
+            bool: Successful exectuion of command
         """
 
-        series = self.removeString(series, "\n")
-        series = self.removeString(series, r"[vV]on\s\w+\s+(\(\d+\))?:")
-        series = self.removeString(series, r"[iI]st diese [mM]einung hilfreich(\?)?")
-        series = self.removeString(series, r"\d+\s\w+\s\d+(\s\w+)+\.(\s\w+)+\?")
-        return series
+        self.removeString("\n")
+        self.removeString(r"[vV]on\s\w+\s+(\(\d+\))?:")
+        self.removeString(r"[iI]st diese [mM]einung hilfreich(\?)?")
+        self.removeString(r"\d+\s\w+\s\d+(\s\w+)+\.(\s\w+)+\?")
+        return bool
 
     def substitueSpecial(
         self,
-        series: pd.Series,
         transldict: dict = {
             ord("ä"): "ae",
             ord("ü"): "ue",
             ord("ö"): "oe",
             ord("ß"): "ss",
         },
-    ) -> pd.Series:
+    ) -> bool:
         """
         substitue the special characters for text and stopwords with their non utf-8 counterparts
 
         Args:
-            series (pd.Series): Series containing the text from reviews
             dict (dict, optional): dictionary of the characters to substitute. Defaults to {ord("ä"): "ae", ord("ü"): "ue", ord("ö"): "oe", ord("ß"): "ss"}.
 
         Returns:
-            series (pd.Series): Series containing text with subsituted special characters
+            bool: Sucessfull execution of command
         """
 
         self.substitutedict = transldict
-        return series.apply(lambda x: x.translate(self.substitutedict))
+        self.data[self.normalizeColumn] = self.data[self.normalizeColumn].apply(
+            lambda x: x.translate(self.substitutedict))
 
-    def tokenize(self, series: pd.Series) -> pd.Series:
+    def tokenize(self) -> bool:
         """
         tokenize the series
 
-        Args:
-            series (pd.Series): Series containing text
-
         Returns:
-            series (pd.Series): Series containing array of tokens
+            bool: Sucessful execution of command
         """
 
-        return series.str.split()
+        self.data['tokens'] = self.data[self.normalizeColumn].str.split()
 
     def loadSpacyModel(
         self,
@@ -210,8 +156,8 @@ class Preprocessor:
         try:
             self.nlp = spacy.load(model, disable=disableList)
             return True
-        except OSError as oe:
-            print(oe)
+        except OSError:
+            print("Model not found. Attempting to download..")
             try:
                 spacy.cli.download(model)
             except Exception as e:
@@ -235,88 +181,84 @@ class Preprocessor:
         self.stopwords = self.nlp.Defaults.stop_words
         return True
 
-    def removeStopwords(self, series: pd.Series) -> pd.Series:
+    def removeStopwords(self) -> bool:
         """
         removes the stopwords from tokenized series
 
-        Args:
-            series (pd.Series): Series containing tokenized text
-
         Returns:
-            series (pd.Series): tokenized Series without stopwords
+            bool: Sucessful execution of command
         """
 
         if not self.loadStopwords():
             print("Skipping. Unable to load Stopwords!")
-            return series
 
         if self.substituespecial:
             self.stopwords = {
                 word.translate(self.substitutedict) for word in self.stopwords
             }
 
-        return series.apply(
+        self.data["tokens"] = self.data["tokens"].apply(
             lambda x: [
                 word for word in x if (word not in self.stopwords and word != "")
             ]
         )
 
-    def lemmanizeTokens(self, tokenized_series: pd.Series) -> pd.Series:
+    def lemmanizeTokens(self) -> bool:
         """
         produces a lemmatized version of the tokenized series it was given
 
-        Args:
-            tokenized_series (pd.Series): already tokenized series
-
         Returns:
-            lemmanized_series (pd.Series): a lemmanized series
+            bool: Sucessful execution of command
         """
         if not self.nlp:
             if not self.loadSpacyModel():
+                return False
                 print("Skipping. Unable to load Spacy Model")
-                return tokenized_series
 
-        lemmanized_series = tokenized_series.apply(
+        self.data["tokens"] = self.data["tokens"].apply(
             lambda x: [word.lemma_ for word in self.nlp(" ".join(x))]
         )
+        return True
 
-        return lemmanized_series
-
-    def prep(self) -> pd.Series:
+    def prep(self) -> bool:
         """
         prepares the data with the configuations given at initialization
 
         Returns:
             pd.Series: tokenized Series
         """
-
-        text = pd.Series(dtype=str)
-
-        files = self.find_jsons()
-
-        for file in files:
-            text = text.append(self.extract_text(file), ignore_index=True)
+        if self.data is None or self.data.empty:
+            self.loadCSV()
 
         if self.substituespecial:
-            text = self.substitueSpecial(text)
+            self.substitueSpecial()
 
         if self.rmnonalphanumeric:
-            text = self.rmNonAlphaNumeric(text)
+            self.rmNonAlphaNumeric()
 
         if self.lower:
-            text = self.removeCapitalization(text)
+            self.removeCapitalization()
 
         if self.rmdefault:
-            text = self.removeDefaultStrings(text)
+            self.removeDefaultStrings()
 
-        text_tokenized = pd.Series(dtype=str)
         if self.rmstopwords:
-            text_tokenized = self.tokenize(text)
-            text_tokenized = self.removeStopwords(text_tokenized)
+            self.tokenize()
+            self.removeStopwords()
         else:
-            text_tokenized = self.tokenize(text)
+            self.tokenize()
 
         if self.lemmanize:
-            return self.lemmanizeTokens(text_tokenized)
-        else:
-            return text_tokenized
+            self.lemmanizeTokens()
+
+        return True
+
+
+if __name__ == "__main__":
+    prep = Preprocessor(path="tests/data/", rmstopwords=False, lemmanize=True)
+
+    prep.loadCSV("test.csv")
+
+    prep.prep()
+
+    print(prep.data)
