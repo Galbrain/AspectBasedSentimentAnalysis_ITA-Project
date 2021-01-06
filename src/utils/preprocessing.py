@@ -2,6 +2,7 @@
 import glob
 import json
 import re
+from datetime import date
 from unittest.main import main
 
 import pandas as pd
@@ -15,7 +16,7 @@ class Preprocessor:
 
     def __init__(
         self,
-        path: str = "src/data/raw/",
+        path: str = "src/data/",
         lower: bool = True,
         rmnonalphanumeric: bool = True,
         substituespecial: bool = False,
@@ -49,12 +50,29 @@ class Preprocessor:
         self.normalizeColumn = "text_normalized"
 
     def loadCSV(self, filename: str = "data_raw.csv"):
+        """
+        read csv of self.path + filename, drop all invalid entries and create a normalized text column
+
+        Args:
+            filename (str, optional): Defaults to "data_raw.csv".
+        """
         df_DataRaw = pd.read_csv(self.path + filename)
         df_DataRaw.dropna(inplace=True)
         df_DataRaw[self.normalizeColumn] = df_DataRaw['review_text_raw']
         self.data = df_DataRaw
 
+    def saveCSV(self, filename: str = "data_preprocessed.csv"):
+        """
+        safe the data as csv
+
+        Args:
+            filename (str, optional): Defaults to "data_preprocessed.csv".
+        """
+        self.data.to_csv(self.path + filename, index=False)
+
     def splitSentences(self) -> bool:
+        # TODO: think about this one
+
         self.data['review_text_raw'].str.split(r"")
         return True
 
@@ -100,7 +118,6 @@ class Preprocessor:
         Returns:
             bool: Successful exectuion of command
         """
-
         self.removeString("\n")
         self.removeString(r"[vV]on\s\w+\s+(\(\d+\))?:")
         self.removeString(r"[iI]st diese [mM]einung hilfreich(\?)?")
@@ -152,7 +169,6 @@ class Preprocessor:
             model (str, optional): name of the mode. Defaults to "de_core_news_sm".
             disableList (list[str], optional): list of things to be disabled. Defaults to ["tagger", "parser", "ner"].
         """
-
         try:
             self.nlp = spacy.load(model, disable=disableList)
             return True
@@ -252,13 +268,3 @@ class Preprocessor:
             self.lemmanizeTokens()
 
         return True
-
-
-if __name__ == "__main__":
-    prep = Preprocessor(path="tests/data/", rmstopwords=False, lemmanize=True)
-
-    prep.loadCSV("test.csv")
-
-    prep.prep()
-
-    print(prep.data)
