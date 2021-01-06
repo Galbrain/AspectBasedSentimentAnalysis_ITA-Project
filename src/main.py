@@ -1,6 +1,7 @@
 import os
 
-from utils.sample import hello_world  # import of module from subfolder
+import numpy as NP
+from utils.web_scraper import WebScraper
 
 """
 This script should serve as entrypoint to your program.
@@ -10,12 +11,8 @@ as script).
 """
 
 if __name__ == "__main__":
-    # run example function
-    hello_world_success = hello_world()
-    print("Hello World completed successfully!") if hello_world_success else print(
-        "Hello Wold failed!"
-    )
-
-    # exemplify how to access environment variables
-    # print("\nEnvironment variable: {}".format(os.environ["TEST_PW"]))
-    # print("In production never print password to console! :)\n")
+    if not os.path.exists("src/data/data_raw.csv"):
+        urls = NP.loadtxt("src/utils/urls.txt", dtype=str, comments="!")
+        # Scraper = WebScraper(list(urls[0]))
+        # Scraper.start_scraping()
+        # Scraper.store_data()

@@ -105,64 +105,7 @@ class WebScraper:
             df_review = self.scrape_page(url)
             self.data.append(df_review, ignore_index=True)
 
-    def store_data(self, path: str = "src/data/raw/"):
+    def store_data(self, path: str = "src/data/"):
         self.data.to_csv(path + "raw_data.csv", index=False)
-
-
-if __name__ == "__main__":
-    urls = [
-        "https://www.spieletipps.de/game/dead-space/#meinungen",
-        #  "https://www.spieletipps.de/game/dead-space-2/#meinungen",
-        # "https://www.spieletipps.de/game/gta-san-andreas/#meinungen",
-        # "https://www.spieletipps.de/game/dishonored/",
-        # "https://www.spieletipps.de/game/uncharted-2/#meinungen",
-        # "https://www.spieletipps.de/game/sims-3/#meinungen",
-        # "https://www.spieletipps.de/game/arkham-city/#meinungen",
-        # "https://www.spieletipps.de/game/borderlands/#meinungen",
-        # "https://www.spieletipps.de/game/diablo-3/#meinungen",
-        # "https://www.spieletipps.de/game/ac-4/#meinungen",
-        # "https://www.spieletipps.de/game/far-cry-3/#meinungen",
-        # "https://www.spieletipps.de/game/skyrim/#meinungen",
-        # "https://www.spieletipps.de/game/gta-5/#meinungen",
-        # "https://www.spieletipps.de/game/demons-souls/#meinungen",
-        # "https://www.spieletipps.de/game/tomb-raider/#meinungen",
-        # "https://www.spieletipps.de/game/last-of-us-remastered/#meinungen",
-        # "https://www.spieletipps.de/game/new-super-mario-bros-1/#meinungen",
-        # "https://www.spieletipps.de/game/super-mario-galaxy-2/#meinungen",
-        # "https://www.spieletipps.de/game/super-mario-galaxy/#meinungen",
-        # "https://www.spieletipps.de/game/mario-kart/#meinungen",
-        # "https://www.spieletipps.de/game/gta-vice-city/#meinungen",
-        # "https://www.spieletipps.de/game/grand-theft-auto-3/#meinungen",
-        # "https://www.spieletipps.de/game/rocket-league/#meinungen",
-        # "https://www.spieletipps.de/game/anno-1404/#meinungen",
-        # "https://www.spieletipps.de/game/ff-x-1/#meinungen",
-        # "https://www.spieletipps.de/game/witcher-3/#meinungen",
-        # "https://www.spieletipps.de/game/uncharted/#meinungen",
-        # " https://www.spieletipps.de/game/nfs-hot-pursuit/#meinungen",
-        # "https://www.spieletipps.de/game/portal-2/#meinungen",
-        # "https://www.spieletipps.de/game/zelda-skyward-sword/#meinungen",
-        # "https://www.spieletipps.de/game/zelda-twilight-princess/#meinungen",
-        # "https://www.spieletipps.de/game/super-smash-bros-brawl/#meinungen",
-        # "https://www.spieletipps.de/game/mass-effect-2/#meinungen",
-        # "https://www.spieletipps.de/game/ac-wild-world/#meinungen",
-        # "https://www.spieletipps.de/game/monster-hunter-3/#meinungen",
-        # "https://www.spieletipps.de/game/ac-2/#meinungen",
-        # "https://www.spieletipps.de/game/assassins-creed/#meinungen",
-        # "https://www.spieletipps.de/game/assassins-creed-3/#meinungen",
-        # "https://www.spieletipps.de/game/beyond-two-souls/#meinungen",
-        # "https://www.spieletipps.de/game/heavy-rain/#meinungen",
-        # "https://www.spieletipps.de/game/lbp-2/#meinungen",
-        # "https://www.spieletipps.de/game/lbp/#meinungen",
-        # "https://www.spieletipps.de/game/dmc-devil-may-cry/#meinungen",
-        # "https://www.spieletipps.de/game/halo-4/#meinungen",
-        # "https://www.spieletipps.de/game/gothic/#meinungen",
-        # "https://www.spieletipps.de/game/minecraft/#meinungen",
-    ]
-
-    web_scraper = WebScraper(urls)
-
-    web_scraper.start_scraping()
-
-    web_scraper.store_data()
 
     # web_scraper.store_data() # currently not neccessary, since start_scraping already stores gathered data for each url
