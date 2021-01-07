@@ -22,7 +22,9 @@ class AspectAnnotator:
         self.path = path
         self.data = data
         self.keyWords = keyWords
-        self.df = pd.DataFrame(columns=["reviewnumber"])
+        self.df = pd.DataFrame(
+            columns=["reviewnumber", "word_found", "word_idx", "aspect"]
+        )
 
     def loadCSV(self, filename: str = "data_preprocessed.csv"):
         self.data = pd.read_csv(self.path + filename)
@@ -39,17 +41,14 @@ class AspectAnnotator:
         for aspect in self.keyWords:
             compare = self.keyWords[aspect]
 
-            indices = [
-                i
-                for i, elem in enumerate(rowDf["tokens"])
-                for e in compare
-                if e in elem.lower()
-            ]
-            if len(indices) != 0:
-                aspects[aspect] = indices
-        if len(aspects) != 0:
-            aspects["reviewnumber"] = rowDf.name
-            self.df = self.df.append(aspects, ignore_index=True)
+            for i, elem in enumerate(rowDf["tokens"]):
+                for e in compare:
+                    if e in elem.lower():
+                        aspects["reviewnumber"] = rowDf.name
+                        aspects["word_found"] = elem
+                        aspects["word_idx"] = i
+                        aspects["aspect"] = aspect
+                        self.df = self.df.append(aspects, ignore_index=True)
 
     def annotate(self):
         self.data.apply(lambda x: self.findAspects(x), axis=1)
