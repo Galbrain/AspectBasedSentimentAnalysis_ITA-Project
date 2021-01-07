@@ -208,7 +208,7 @@ class Preprocessor:
         Returns:
             bool: Sucessful execution of command
         """
-        if len(self.stopwords):
+        if self.stopwords is not None:
             return True
 
         if not self.loadStopwords():
