@@ -7,9 +7,11 @@ import requests
 import selenium
 from bs4 import BeautifulSoup
 from selenium import webdriver
-from selenium.common.exceptions import (ElementClickInterceptedException,
-                                        ElementNotInteractableException,
-                                        NoSuchElementException)
+from selenium.common.exceptions import (
+    ElementClickInterceptedException,
+    ElementNotInteractableException,
+    NoSuchElementException,
+)
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
@@ -21,7 +23,7 @@ class WebScraper:
     Webscraper class
     """
 
-    def __init__(self, urls: [str]):
+    def __init__(self, urls: list[str]):
 
         self.urls = urls
         self.driver = webdriver.Firefox(executable_path=r".venv/geckodriver.exe")
@@ -41,6 +43,7 @@ class WebScraper:
 
             driver.switch_to.frame(iframe_index)
             button_path = "/html/body/div/div[3]/div[2]/button"
+            # button_path = "/html/body/div/div[3]/div[4]/button"
             try:
                 button = driver.find_element_by_xpath(button_path)
                 button.click()
@@ -74,7 +77,7 @@ class WebScraper:
 
         opinions_tags = soup.find_all("div", class_="collapse")
 
-        review_summaries = pd.DataFrame(columns=['title', 'review_text_raw', 'rating'])
+        review_summaries = pd.DataFrame(columns=["title", "review_text_raw", "rating"])
 
         for opinion_tag in opinions_tags:
 
@@ -93,9 +96,9 @@ class WebScraper:
                 dl.decompose()
 
             review_summary = {
-                'title': title,
+                "title": title,
                 "review_text_raw": opinion_tag.get_text(),
-                "rating": stars}
+            }
             review_summaries.append(review_summary, ignore_index=True)
 
         return review_summaries

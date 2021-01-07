@@ -20,7 +20,7 @@ class Preprocessor:
         lower: bool = True,
         rmnonalphanumeric: bool = True,
         substituespecial: bool = False,
-        lemmanize: bool = False,
+        lemmatize: bool = False,
         rmstopwords: bool = True,
         rmdefault: bool = True,
     ):
@@ -32,7 +32,7 @@ class Preprocessor:
             lower (bool, optional): remove capitalization. Defaults to True.
             rmnonalphanumeric (bool, optional): removeNonAlphanumeric. Defaults to True.
             substituespecial (bool, optional): substitue {ä,ö,ü,ß}. Defaults to True.
-            lemmanize (bool, optional): find the lemma of all words in text. Defaults to False.
+            lemmatize (bool, optional): find the lemma of all words in text. Defaults to False.
             rmstopwords (bool, optional): rm stopwords from spacey stopword list. Defaults to True.
             rmdefault (bool, optional): rm default phrase from the text. Defaults to True.
         """
@@ -41,13 +41,14 @@ class Preprocessor:
         self.lower = lower
         self.rmnonalphanumeric = rmnonalphanumeric
         self.substituespecial = substituespecial
-        self.lemmanize = lemmanize
+        self.lemmatize = lemmatize
         self.rmstopwords = rmstopwords
         self.rmdefault = rmdefault
-        self.stopwords = {}
+        self.stopwords = None
         self.substitutedict = {}
         self.nlp = None
         self.normalizeColumn = "text_normalized"
+        self.data = None
 
     def loadCSV(self, filename: str = "data_raw.csv"):
         """
@@ -58,7 +59,7 @@ class Preprocessor:
         """
         df_DataRaw = pd.read_csv(self.path + filename)
         df_DataRaw.dropna(inplace=True)
-        df_DataRaw[self.normalizeColumn] = df_DataRaw['review_text_raw']
+        df_DataRaw[self.normalizeColumn] = df_DataRaw["review_text_raw"]
         self.data = df_DataRaw
 
     def saveCSV(self, filename: str = "data_preprocessed.csv"):
@@ -73,7 +74,7 @@ class Preprocessor:
     def splitSentences(self) -> bool:
         # TODO: think about this one
 
-        self.data['review_text_raw'].str.split(r"")
+        self.data["review_text_raw"].str.split(r"")
         return True
 
     def removeCapitalization(self) -> bool:
@@ -95,7 +96,8 @@ class Preprocessor:
         """
 
         self.data[self.normalizeColumn] = self.data[self.normalizeColumn].str.replace(
-            r"[^\w\s]", "")
+            r"[^\w\s]", " "
+        )
 
     def removeString(self, regstring: str) -> bool:
         """
@@ -109,7 +111,8 @@ class Preprocessor:
         """
 
         self.data[self.normalizeColumn] = self.data[self.normalizeColumn].str.replace(
-            regstring, "")
+            regstring, " "
+        )
 
     def removeDefaultStrings(self) -> bool:
         """
@@ -119,7 +122,7 @@ class Preprocessor:
             bool: Successful exectuion of command
         """
         self.removeString("\n")
-        self.removeString(r"[vV]on\s\w+\s+(\(\d+\))?:")
+        self.removeString(r"[vV]on\s[\w-]+\s+(\(\d+\))?:")
         self.removeString(r"[iI]st diese [mM]einung hilfreich(\?)?")
         self.removeString(r"\d+\s\w+\s\d+(\s\w+)+\.(\s\w+)+\?")
         return bool
@@ -145,7 +148,8 @@ class Preprocessor:
 
         self.substitutedict = transldict
         self.data[self.normalizeColumn] = self.data[self.normalizeColumn].apply(
-            lambda x: x.translate(self.substitutedict))
+            lambda x: x.translate(self.substitutedict)
+        )
 
     def tokenize(self) -> bool:
         """
@@ -155,7 +159,7 @@ class Preprocessor:
             bool: Sucessful execution of command
         """
 
-        self.data['tokens'] = self.data[self.normalizeColumn].str.split()
+        self.data["tokens"] = self.data[self.normalizeColumn].str.split()
 
     def loadSpacyModel(
         self,
@@ -204,6 +208,8 @@ class Preprocessor:
         Returns:
             bool: Sucessful execution of command
         """
+        if len(self.stopwords):
+            return True
 
         if not self.loadStopwords():
             print("Skipping. Unable to load Stopwords!")
@@ -215,11 +221,13 @@ class Preprocessor:
 
         self.data["tokens"] = self.data["tokens"].apply(
             lambda x: [
-                word for word in x if (word not in self.stopwords and word != "")
+                word
+                for word in x
+                if (word.lower() not in self.stopwords and word != "")
             ]
         )
 
-    def lemmanizeTokens(self) -> bool:
+    def lemmatizeTokens(self) -> bool:
         """
         produces a lemmatized version of the tokenized series it was given
 
@@ -246,6 +254,9 @@ class Preprocessor:
         if self.data is None or self.data.empty:
             self.loadCSV()
 
+        if self.rmdefault:
+            self.removeDefaultStrings()
+
         if self.substituespecial:
             self.substitueSpecial()
 
@@ -255,16 +266,13 @@ class Preprocessor:
         if self.lower:
             self.removeCapitalization()
 
-        if self.rmdefault:
-            self.removeDefaultStrings()
-
         if self.rmstopwords:
             self.tokenize()
             self.removeStopwords()
         else:
             self.tokenize()
 
-        if self.lemmanize:
-            self.lemmanizeTokens()
+        if self.lemmatize:
+            self.lemmatizeTokens()
 
         return True

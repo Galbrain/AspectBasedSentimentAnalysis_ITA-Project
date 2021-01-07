@@ -30,3 +30,4 @@ src/data/*
 !src/data/raw/.gitkeep
 !src/data/pictures/*.png
 htmlcov/*local*.html
+geckodriver.log

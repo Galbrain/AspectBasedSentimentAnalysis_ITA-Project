@@ -25,15 +25,19 @@ class PreprocessingTest(unittest.TestCase):
         tmpprep = Preprocessor(self.path, rmstopwords=False)
         tmpprep.loadCSV("test.csv")
         tmpprep.prep()
-        self.assertTrue(["das", "ist", "für", "eine", "testdatei"]
-                        == tmpprep.data["tokens"].tolist()[0])
+        self.assertTrue(
+            ["das", "ist", "für", "eine", "testdatei"]
+            == tmpprep.data["tokens"].tolist()[0]
+        )
 
     def testLemmanize(self):
         tmpprep = Preprocessor(self.path, lemmanize=True, rmstopwords=False)
         tmpprep.loadCSV("test.csv")
         tmpprep.prep()
-        self.assertTrue(["der", "sein", "für", "einen", "testdatei"]
-                        == tmpprep.data["tokens"].tolist()[0])
+        self.assertTrue(
+            ["der", "sein", "für", "einen", "testdatei"]
+            == tmpprep.data["tokens"].tolist()[0]
+        )
 
 
 if __name__ == "__main__":
