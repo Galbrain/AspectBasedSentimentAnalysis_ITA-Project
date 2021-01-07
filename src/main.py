@@ -24,7 +24,7 @@ if __name__ == "__main__":
 
     if not os.path.exists("src/data/data_preprocessed.csv") or do_processing:
         Preper = Preprocessor(
-            lemmatize=True, lower=False, rmnonalphanumeric=False, rmstopwords=False
+            lemmatize=False, lower=False, rmnonalphanumeric=False, rmstopwords=False
         )
         Preper.loadSpacyModel(model="de_core_news_md")
         Preper.prep()
@@ -34,4 +34,4 @@ if __name__ == "__main__":
         Anotator = AspectAnnotator()
         Anotator.loadCSV()
         Anotator.annotate()
-        # print(Anotator.data.iloc[1]['text_normalized'])
+        Anotator.saveCSV()

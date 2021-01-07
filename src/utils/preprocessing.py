@@ -122,7 +122,7 @@ class Preprocessor:
             bool: Successful exectuion of command
         """
         self.removeString("\n")
-        self.removeString(r"[vV]on\s[\w-]+\s+(\(\d+\))?:")
+        self.removeString(r"[vV]on\s[\w\d-]+\s+(\(\d+\))?:")
         self.removeString(r"[iI]st diese [mM]einung hilfreich(\?)?")
         self.removeString(r"\d+\s\w+\s\d+(\s\w+)+\.(\s\w+)+\?")
         return bool
