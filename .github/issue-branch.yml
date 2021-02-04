@@ -2,6 +2,15 @@ autoCloseIssue: true
 branches:
     - label: 
         - bug
+      name: develop
+    - label: 
         - documentation
         - feature
       name: develop
+    - label: 
+        - documentation
+      name: develop
+    - label:
+        - feature
+      name: develop
+     
