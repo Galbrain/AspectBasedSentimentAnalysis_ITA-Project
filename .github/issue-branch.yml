@@ -13,4 +13,8 @@ branches:
     - label:
         - feature
       name: develop
-     
+     - label: 
+        - documentation
+        - bug
+        - feature
+      name: develop
