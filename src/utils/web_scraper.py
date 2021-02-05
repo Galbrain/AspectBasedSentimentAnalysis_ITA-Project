@@ -2,11 +2,14 @@ import json
 import re
 import time
 
+import pandas as pd
 import requests
+import selenium
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.common.exceptions import (
     ElementClickInterceptedException,
+    ElementNotInteractableException,
     NoSuchElementException,
 )
 from selenium.webdriver.common.by import By
@@ -20,14 +23,14 @@ class WebScraper:
     Webscraper class
     """
 
-    def __init__(self, urls):
+    def __init__(self, urls: list[str]):
 
         self.urls = urls
-        self.driver = webdriver.Firefox()
+        self.driver = webdriver.Firefox(executable_path=r".venv/geckodriver.exe")
         self.driver.implicitly_wait(10)
-        self.data = list()
+        self.data = pd.DataFrame
 
-    def scrape_page(self, url):
+    def scrape_page(self, url: str):
 
         driver = self.driver
         driver.get(url)
@@ -40,11 +43,12 @@ class WebScraper:
 
             driver.switch_to.frame(iframe_index)
             button_path = "/html/body/div/div[3]/div[2]/button"
+            # button_path = "/html/body/div/div[3]/div[4]/button"
             try:
                 button = driver.find_element_by_xpath(button_path)
                 button.click()
                 driver.switch_to.default_content()
-            except NoSuchElementException:  # TODO: THIS IS PROBABLY WRONG
+            except ElementNotInteractableException:  # TODO: THIS IS PROBABLY WRONG
                 driver.switch_to.default_content()
                 continue
             break
@@ -73,7 +77,7 @@ class WebScraper:
 
         opinions_tags = soup.find_all("div", class_="collapse")
 
-        review_summaries = list()
+        review_summaries = pd.DataFrame(columns=["title", "review_text_raw", "rating"])
 
         for opinion_tag in opinions_tags:
 
@@ -91,81 +95,20 @@ class WebScraper:
             for dl in dls:
                 dl.decompose()
 
-            review_summary = {"text": opinion_tag.get_text(), "rating": stars}
-            review_summaries.append(review_summary)
+            review_summary = {
+                "title": title,
+                "review_text_raw": opinion_tag.get_text(),
+            }
+            review_summaries.append(review_summary, ignore_index=True)
 
-        results = {"title": title, "reviews": review_summaries}
-        return results
+        return review_summaries
 
     def start_scraping(self):
-        for url in urls:
-            page_data = self.scrape_page(url)
-            title = page_data["title"].replace("\n", "")
-            out = json.dumps(page_data)
-            with open("../data/raw/" + title + ".json", "w") as doc:
-                doc.write(out)
-            self.data.append(page_data)
+        for url in self.urls:
+            df_review = self.scrape_page(url)
+            self.data.append(df_review, ignore_index=True)
 
-    def store_data(self):
-        for source in self.data:
-            out = json.dumps(source)
-            title = source["title"].replace("\n", "")
-            with open("../data/raw/" + title + ".json", "w") as doc:
-                doc.write(out)
-
-
-if __name__ == "__main__":
-    urls = [
-        "https://www.spieletipps.de/game/dead-space/#meinungen",
-        "https://www.spieletipps.de/game/dead-space-2/#meinungen",
-        "https://www.spieletipps.de/game/gta-san-andreas/#meinungen",
-        "https://www.spieletipps.de/game/dishonored/",
-        "https://www.spieletipps.de/game/uncharted-2/#meinungen",
-        "https://www.spieletipps.de/game/sims-3/#meinungen",
-        "https://www.spieletipps.de/game/arkham-city/#meinungen",
-        "https://www.spieletipps.de/game/borderlands/#meinungen",
-        "https://www.spieletipps.de/game/diablo-3/#meinungen",
-        "https://www.spieletipps.de/game/ac-4/#meinungen",
-        "https://www.spieletipps.de/game/far-cry-3/#meinungen",
-        "https://www.spieletipps.de/game/skyrim/#meinungen",
-        "https://www.spieletipps.de/game/gta-5/#meinungen",
-        "https://www.spieletipps.de/game/demons-souls/#meinungen",
-        "https://www.spieletipps.de/game/tomb-raider/#meinungen",
-        "https://www.spieletipps.de/game/last-of-us-remastered/#meinungen",
-        "https://www.spieletipps.de/game/new-super-mario-bros-1/#meinungen",
-        "https://www.spieletipps.de/game/super-mario-galaxy-2/#meinungen",
-        "https://www.spieletipps.de/game/super-mario-galaxy/#meinungen",
-        "https://www.spieletipps.de/game/mario-kart/#meinungen",
-        "https://www.spieletipps.de/game/gta-vice-city/#meinungen",
-        "https://www.spieletipps.de/game/grand-theft-auto-3/#meinungen",
-        "https://www.spieletipps.de/game/rocket-league/#meinungen",
-        "https://www.spieletipps.de/game/anno-1404/#meinungen",
-        "https://www.spieletipps.de/game/ff-x-1/#meinungen",
-        "https://www.spieletipps.de/game/witcher-3/#meinungen",
-        "https://www.spieletipps.de/game/uncharted/#meinungen",
-        " https://www.spieletipps.de/game/nfs-hot-pursuit/#meinungen",
-        "https://www.spieletipps.de/game/portal-2/#meinungen",
-        "https://www.spieletipps.de/game/zelda-skyward-sword/#meinungen",
-        "https://www.spieletipps.de/game/zelda-twilight-princess/#meinungen",
-        "https://www.spieletipps.de/game/super-smash-bros-brawl/#meinungen",
-        "https://www.spieletipps.de/game/mass-effect-2/#meinungen",
-        "https://www.spieletipps.de/game/ac-wild-world/#meinungen",
-        "https://www.spieletipps.de/game/monster-hunter-3/#meinungen",
-        "https://www.spieletipps.de/game/ac-2/#meinungen",
-        "https://www.spieletipps.de/game/assassins-creed/#meinungen",
-        "https://www.spieletipps.de/game/assassins-creed-3/#meinungen",
-        "https://www.spieletipps.de/game/beyond-two-souls/#meinungen",
-        "https://www.spieletipps.de/game/heavy-rain/#meinungen",
-        "https://www.spieletipps.de/game/lbp-2/#meinungen",
-        "https://www.spieletipps.de/game/lbp/#meinungen",
-        "https://www.spieletipps.de/game/dmc-devil-may-cry/#meinungen",
-        "https://www.spieletipps.de/game/halo-4/#meinungen",
-        "https://www.spieletipps.de/game/gothic/#meinungen",
-        "https://www.spieletipps.de/game/minecraft/#meinungen",
-    ]
-
-    web_scraper = WebScraper(urls)
-
-    web_scraper.start_scraping()
+    def store_data(self, path: str = "src/data/"):
+        self.data.to_csv(path + "raw_data.csv", index=False)
 
     # web_scraper.store_data() # currently not neccessary, since start_scraping already stores gathered data for each url

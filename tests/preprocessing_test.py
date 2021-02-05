@@ -10,52 +10,33 @@ from src.utils.preprocessing import Preprocessor
 
 class PreprocessingTest(unittest.TestCase):
     def setUp(self):
-        self.path = "./src/data/"
+        self.path = "./tests/data/"
         self.preprocessor = Preprocessor(self.path)
-        self.test_json = {
-            "reviews": [
-                {
-                    "text": "Das ist für eine Testdatei!",
-                    "rating": {
-                        "Grafik": 4,
-                        "Sound": 5,
-                        "Steuerung": 5,
-                        "Atmosphäre": 5,
-                    },
-                }
-            ]
-        }
 
     def testValidPath(self):
         self.assertTrue(os.path.isdir(self.preprocessor.path))
 
-    def testNoJsonfiles(self):
-        tmpprep = Preprocessor("./")
-        self.assertRaises(Exception, lambda: tmpprep.find_jsons())
-
     def testPrepDefault(self):
-        with open(self.path + "testdata.json", "w") as f:
-            json.dump(self.test_json, f, indent=4)
-
         tmpprep = Preprocessor(self.path)
-        self.assertTrue([["testdatei"]] == tmpprep.prep().tolist())
+        tmpprep.loadCSV("test.csv")
+        self.assertTrue(tmpprep.prep())
 
     def testPrepNoStopwordRemoval(self):
-        with open(self.path + "testdata.json", "w") as f:
-            json.dump(self.test_json, f, indent=4)
-
         tmpprep = Preprocessor(self.path, rmstopwords=False)
+        tmpprep.loadCSV("test.csv")
+        tmpprep.prep()
         self.assertTrue(
-            [["das", "ist", "für", "eine", "testdatei"]] == tmpprep.prep().tolist()
+            ["das", "ist", "für", "eine", "schöne", "testdatei"]
+            == tmpprep.data["tokens"].tolist()[0]
         )
 
     def testLemmanize(self):
-        with open(self.path + "testdata.json", "w") as f:
-            json.dump(self.test_json, f, indent=4)
-
-        tmpprep = Preprocessor(self.path, lemmanize=True, rmstopwords=False)
+        tmpprep = Preprocessor(self.path, lemmatize=True, rmstopwords=False)
+        tmpprep.loadCSV("test.csv")
+        tmpprep.prep()
         self.assertTrue(
-            [["der", "sein", "für", "einen", "testdatei"]] == tmpprep.prep().tolist()
+            ["der", "sein", "für", "einen", "schöne", "testdatei"]
+            == tmpprep.data["tokens"].tolist()[0]
         )
 
 
