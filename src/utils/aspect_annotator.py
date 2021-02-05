@@ -42,12 +42,12 @@ class AspectAnnotator:
             .values.tolist()
         )
 
-    def findAspects(self, rowDf: pd.Series) -> None:
+    def findAspects(self, rowDf: pd.DataFrame) -> None:
         """
         function to be vectorized for the dataset
 
         Args:
-            rowDf (pd.Series): Row of a dataframe containing "index and tokens"
+            rowDf (pd.Dataframe): Row of a dataframe containing "index (rowDF.name)" and "tokens"
         """
         aspects = {}
         for aspect in self.keyWords:
