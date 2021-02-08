@@ -1,9 +1,12 @@
 import os
 
 import numpy as NP
+import requests
 from utils.aspect_annotator import AspectAnnotator
 from utils.preprocessing import Preprocessor
 from utils.web_scraper import WebScraper
+
+from sentiment_detection import SentimentDetector
 
 """
 This script should serve as entrypoint to your program.
@@ -21,6 +24,11 @@ if __name__ == "__main__":
         Scraper = WebScraper(urls)
         Scraper.start_scraping()
         Scraper.store_data()
+
+    # download the sentiment lexicon, if it doesn't exist
+    if not os.path.exists("src/data/sentimentLexicon.csv"):
+        detector = SentimentDetector()
+        detector.downloadLexicon()
 
     if not os.path.exists("src/data/data_preprocessed.csv") or do_processing:
         Preper = Preprocessor(
