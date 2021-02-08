@@ -2,11 +2,10 @@ import os
 
 import numpy as NP
 import requests
+from sentiment_detection import SentimentDetector
 from utils.aspect_annotator import AspectAnnotator
 from utils.preprocessing import Preprocessor
 from utils.web_scraper import WebScraper
-
-from sentiment_detection import SentimentDetector
 
 """
 This script should serve as entrypoint to your program.
@@ -15,8 +14,14 @@ The code that is actually executed is the one below 'if __name__ ...' (if run
 as script).
 """
 do_scraping = False
-do_processing = False
-do_annotation = True
+do_processing = True
+do_annotation = False
+do_sentimentanalysis = True
+
+Scraper = None
+Preper = None
+Anotator = None
+Detector = None
 
 if __name__ == "__main__":
     if not os.path.exists("src/data/data_raw.csv") or do_scraping:
@@ -25,21 +30,23 @@ if __name__ == "__main__":
         Scraper.start_scraping()
         Scraper.store_data()
 
-    # download the sentiment lexicon, if it doesn't exist
-    if not os.path.exists("src/data/sentimentLexicon.csv"):
-        detector = SentimentDetector()
-        detector.downloadLexicon()
-
     if not os.path.exists("src/data/data_preprocessed.csv") or do_processing:
         Preper = Preprocessor(
-            lemmatize=False, lower=False, rmnonalphanumeric=False, rmstopwords=False
+            lemmatize=False, lower=False, rmnonalphanumeric=True, rmstopwords=True
         )
         Preper.loadSpacyModel(model="de_core_news_md")
         Preper.prep()
         Preper.saveCSV()
 
-    if do_annotation:
+    if not os.path.exists("src/data/data_aspects_tokens.csv") or do_annotation:
         Anotator = AspectAnnotator()
         Anotator.loadCSV()
         Anotator.annotate()
         Anotator.saveCSV()
+
+    if do_sentimentanalysis:
+        Detector = SentimentDetector()
+        if Preper:
+            Detector.df_preprocessed = Preper.data
+        Detector.run()
+        print(Detector.df_preprocessed)

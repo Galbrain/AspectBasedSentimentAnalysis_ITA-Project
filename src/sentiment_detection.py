@@ -18,8 +18,8 @@ class SentimentDetector:
     def downloadLexicon(
         self,
         filename: str = "sentiment_lexicon.csv",
-        url="https://raw.githubusercontent.com/sebastiansauer/pradadata/master/data-raw/germanlex.csv",
-        chunk_size=128,
+        url: str = "https://raw.githubusercontent.com/sebastiansauer/pradadata/master/data-raw/germanlex.csv",
+        chunk_size: int = 1024,
     ) -> None:
         """
         Download sentiment lexicon.
@@ -29,7 +29,6 @@ class SentimentDetector:
             url (str, optional):  Defaults to "https://raw.githubusercontent.com/sebastiansauer/pradadata/master/data-raw/germanlex.csv".
             chunk_size (int, optional): Defines chunk size for downloads of bigger files. Defaults to 128.
         """
-        # TODO progress bar
         r = requests.get(url, stream=True)
 
         file_size = int(r.headers.get("Content-Length", None))
@@ -47,24 +46,32 @@ class SentimentDetector:
 
     def loadCSVs(
         self,
-        tokenFilename="data_aspects_tokens.csv",
-        preprocessedFilename="data_preprocessed.csv",
-        lexiconFilename="sentiment_lexicon.csv",
+        tokenFilename: str = "data_aspects_tokens.csv",
+        preprocessedFilename: str = "data_preprocessed.csv",
+        lexiconFilename: str = "sentiment_lexicon.csv",
     ) -> bool:
         try:
-            self.df_aspect_tokens = PD.read_csv(self.path + tokenFilename)
-            self.df_preprocessed = PD.read_csv(self.path + preprocessedFilename)
-            self.df_preprocessed["tokens"] = (
-                self.df_preprocessed["tokens"]
-                .str.split(",", expand=True)
-                .replace(r"[\[\]]", "", regex=True)
-                .astype(str)
-                .values.tolist()
-            )
-            if not os.path.exists(self.path + lexiconFilename):
-                self.downloadLexicon()
+            if self.df_lexicon is None or self.df_aspect_tokens.empty:
+                self.df_aspect_tokens = PD.read_csv(self.path + tokenFilename)
 
-            self.df_lexicon = PD.read_csv(self.path + lexiconFilename)
+            if self.df_preprocessed is None or self.df_preprocessed.empty:
+                self.df_preprocessed = PD.read_csv(self.path + preprocessedFilename)
+                print("Applying Datatype Transformations....")
+                self.df_preprocessed["tokens"] = (
+                    self.df_preprocessed["tokens"]
+                    .str.split(",", expand=True)
+                    .replace(r"[\[\]]", "", regex=True)
+                    .astype(str)
+                    .values.tolist()
+                )
+                print("Done")
+
+            if self.df_lexicon is None or self.df_lexicon.empty:
+                if not os.path.exists(self.path + lexiconFilename):
+                    self.downloadLexicon()
+
+                self.df_lexicon = PD.read_csv(self.path + lexiconFilename)
+
             return True
         except IOError as e:
             print(e)
@@ -73,15 +80,15 @@ class SentimentDetector:
     def detectSentiment(self) -> None:
         pass
 
-    def createWindow(self):
+    def createWindow(self) -> None:
         pass
 
-    def run(self):
+    def run(self) -> bool:
         if not self.loadCSVs():
             print("Couldn't load CSV's.")
             return False
-
-        self.df_aspect_tokens.apply()
+        pass
+        # self.df_aspect_tokens.apply()
 
 
 if __name__ == "__main__":
