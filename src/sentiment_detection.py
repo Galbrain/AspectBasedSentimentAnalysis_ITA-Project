@@ -35,10 +35,13 @@ class SentimentDetector:
         file_size = int(r.headers.get("Content-Length", None))
         num_bars = NP.ceil(file_size / (chunk_size))
 
-        downloadProgress = tqdm(total=num_bars, desc="Downloading Lexicon...", unit="B")
+        downloadProgress = tqdm(
+            total=num_bars, desc="Downloading Lexicon...", unit="B", unit_scale=True
+        )
+
         with open(self.path + filename, "wb") as fd:
             for chunk in r.iter_content(chunk_size=chunk_size):
-                downloadProgress.update(chunk)
+                downloadProgress.update(len(chunk))
                 fd.write(chunk)
         downloadProgress.close()
 

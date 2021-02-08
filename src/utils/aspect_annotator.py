@@ -4,6 +4,7 @@ import re
 
 import numpy as np
 import pandas as pd
+from tqdm import tqdm
 
 
 class AspectAnnotator:
@@ -66,7 +67,8 @@ class AspectAnnotator:
         """
         function to call the "findAspects()" function for every row
         """
-        self.data.apply(lambda x: self.findAspects(x), axis=1)
+        tqdm.pandas(desc="Finding Aspects!")
+        self.data.progress_apply(lambda x: self.findAspects(x), axis=1)
 
     def saveCSV(self, filename: str = "data_aspects_tokens.csv") -> None:
         """

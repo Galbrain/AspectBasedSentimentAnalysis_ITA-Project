@@ -7,6 +7,7 @@ from unittest.main import main
 
 import pandas as pd
 import spacy
+from tqdm import tqdm
 
 
 class Preprocessor:
@@ -96,7 +97,7 @@ class Preprocessor:
         """
 
         self.data[self.normalizeColumn] = self.data[self.normalizeColumn].str.replace(
-            r"[^\w\s]", " "
+            r"[^\w\s]", " ", regex=True
         )
 
     def removeString(self, regstring: str) -> bool:
@@ -111,7 +112,7 @@ class Preprocessor:
         """
 
         self.data[self.normalizeColumn] = self.data[self.normalizeColumn].str.replace(
-            regstring, " "
+            regstring, " ", regex=True
         )
 
     def removeDefaultStrings(self) -> bool:
@@ -239,9 +240,12 @@ class Preprocessor:
                 return False
                 print("Skipping. Unable to load Spacy Model")
 
-        self.data["tokens"] = self.data["tokens"].apply(
+        tqdm.pandas(desc="Lemmatizing")
+
+        self.data["tokens"] = self.data["tokens"].progress_apply(
             lambda x: [word.lemma_ for word in self.nlp(" ".join(x))]
         )
+
         return True
 
     def prep(self) -> bool:
