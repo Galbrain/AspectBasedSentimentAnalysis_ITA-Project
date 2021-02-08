@@ -10,8 +10,9 @@ requests = "*"
 matplotlib = "*"
 pandas = "*"
 spacy = "*"
-wordcloud = "*"
 pre-commit = "*"
+numpy = "==1.19.5"
+progress = "*"
 
 [dev-packages]
 flake8 = "*"
