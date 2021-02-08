@@ -1,6 +1,9 @@
+import os
+
+import numpy as NP
 import pandas as PD
 import requests
-from progress.bar import Bar
+from tqdm import tqdm
 
 
 class SentimentDetector:
@@ -13,9 +16,11 @@ class SentimentDetector:
         self.df_lexicon = None
 
     def downloadLexicon(
-            self, filename: str = "sentiment_lexicon.csv",
-            url="https://raw.githubusercontent.com/sebastiansauer/pradadata/master/data-raw/germanlex.csv",
-            chunk_size=128) -> None:
+        self,
+        filename: str = "sentiment_lexicon.csv",
+        url="https://raw.githubusercontent.com/sebastiansauer/pradadata/master/data-raw/germanlex.csv",
+        chunk_size=128,
+    ) -> None:
         """
         Download sentiment lexicon.
 
@@ -27,15 +32,21 @@ class SentimentDetector:
         # TODO progress bar
         r = requests.get(url, stream=True)
 
-        with open(self.path + filename, 'wb') as fd:
-            print("Downloading Sentiment Lexicon...")
+        file_size = int(r.headers.get("Content-Length", None))
+        num_bars = NP.ceil(file_size / (chunk_size))
+
+        downloadProgress = tqdm(total=num_bars, desc="Downloading Lexicon...", unit="B")
+        with open(self.path + filename, "wb") as fd:
             for chunk in r.iter_content(chunk_size=chunk_size):
+                downloadProgress.update(chunk)
                 fd.write(chunk)
+        downloadProgress.close()
 
     def loadCSVs(
-            self, tokenFilename="data_aspects_tokens.csv",
-            preprocessedFilename="data_preprocessed.csv",
-            lexiconFilename="sentiment_lexicon.csv"
+        self,
+        tokenFilename="data_aspects_tokens.csv",
+        preprocessedFilename="data_preprocessed.csv",
+        lexiconFilename="sentiment_lexicon.csv",
     ) -> bool:
         try:
             self.df_aspect_tokens = PD.read_csv(self.path + tokenFilename)
@@ -47,6 +58,9 @@ class SentimentDetector:
                 .values.tolist()
             )
             self.df_preprocessed = PD.read_csv(self.path + preprocessedFilename)
+            if not os.path.exists(self.path + lexiconFilename):
+                self.downloadLexicon()
+
             self.df_lexicon = PD.read_csv(self.path + lexiconFilename)
             return True
         except IOError as e:
