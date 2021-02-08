@@ -50,14 +50,14 @@ class SentimentDetector:
     ) -> bool:
         try:
             self.df_aspect_tokens = PD.read_csv(self.path + tokenFilename)
-            self.df_aspect_tokens["tokens"] = (
-                self.df_aspect_tokens["tokens"]
+            self.df_preprocessed = PD.read_csv(self.path + preprocessedFilename)
+            self.df_preprocessed["tokens"] = (
+                self.df_preprocessed["tokens"]
                 .str.split(",", expand=True)
                 .replace(r"[\[\]]", "", regex=True)
                 .astype(str)
                 .values.tolist()
             )
-            self.df_preprocessed = PD.read_csv(self.path + preprocessedFilename)
             if not os.path.exists(self.path + lexiconFilename):
                 self.downloadLexicon()
 
