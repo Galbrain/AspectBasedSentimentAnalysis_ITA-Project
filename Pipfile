@@ -12,7 +12,7 @@ pandas = "*"
 spacy = "*"
 pre-commit = "*"
 numpy = "==1.19.5"
-progress = "*"
+tqdm = "*"
 
 [dev-packages]
 flake8 = "*"

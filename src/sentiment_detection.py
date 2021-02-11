@@ -1,4 +1,5 @@
 import os
+import re
 
 import numpy as NP
 import pandas as PD
@@ -56,15 +57,11 @@ class SentimentDetector:
 
             if self.df_preprocessed is None or self.df_preprocessed.empty:
                 self.df_preprocessed = PD.read_csv(self.path + preprocessedFilename)
-                print("Applying Datatype Transformations....")
-                self.df_preprocessed["tokens"] = (
-                    self.df_preprocessed["tokens"]
-                    .str.split(",", expand=True)
-                    .replace(r"[\[\]]", "", regex=True)
-                    .astype(str)
-                    .values.tolist()
-                )
-                print("Done")
+                # pandas read_csv does not read arrays correctly so we need to adjust those
+                tqdm.pandas(desc="Applying Datatype Transformations....")
+                self.df_preprocessed["tokens"] = self.df_preprocessed[
+                    "tokens"
+                ].progress_apply(lambda x: re.sub(r"[\[\]'\s]*", "", x).split(","))
 
             if self.df_lexicon is None or self.df_lexicon.empty:
                 if not os.path.exists(self.path + lexiconFilename):
