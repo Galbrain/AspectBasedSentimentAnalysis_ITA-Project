@@ -52,6 +52,17 @@ class SentimentDetector:
         preprocessedFilename: str = "data_preprocessed.csv",
         lexiconFilename: str = "sentiment_lexicon.csv",
     ) -> bool:
+        """
+        load all necessary CSV for execution of the detector and set indices as appropriate
+
+        Args:
+            tokenFilename (str, optional): Defaults to "data_aspects_tokens.csv".
+            preprocessedFilename (str, optional): Defaults to "data_preprocessed.csv".
+            lexiconFilename (str, optional): Defaults to "sentiment_lexicon.csv".
+
+        Returns:
+            bool: sucessful execution
+        """
         try:
             if self.df_lexicon is None or self.df_aspect_tokens.empty:
                 self.df_aspect_tokens = PD.read_csv(self.path + tokenFilename)
@@ -79,12 +90,18 @@ class SentimentDetector:
             return False
 
     def detectSentiment(self, rowDF: PD.Series) -> None:
+        """
+        take row of DF and extract review number, uses this review number to create a list of tokens that is [-windowsize:+windowsize].
+        then check for every word in that window if it is a key in the sentiment lexicon, if yes save the qualifier in the aspect_token dataset
+
+        Args:
+            rowDF (PD.Series): row of Dataframe
+        """
         window = self.df_preprocessed.iloc[rowDF["reviewnumber"]]["tokens"][
             rowDF["word_idx"] - self.windowSize : rowDF["word_idx"] + self.windowSize
         ]
         for word in window:
             try:
-                # print(self.df_aspect_tokens.iloc[rowDF.name])
                 if type(self.df_lexicon.loc[word]["qualifier"]) == str:
                     self.df_aspect_tokens["qualifier"][
                         rowDF.name
@@ -97,10 +114,19 @@ class SentimentDetector:
                 pass
 
     def createLookupWindow(self) -> None:
+        """
+        function to vectorize detectSentiment()
+        """
         tqdm.pandas(desc="Looking up Sentiments in windows")
         self.df_aspect_tokens.progress_apply(lambda x: self.detectSentiment(x), axis=1)
 
     def run(self) -> bool:
+        """
+        run all basic functions of the detector
+
+        Returns:
+            bool: successful execution of command
+        """
         if not self.loadCSVs():
             print("Couldn't load CSV's.")
             return False
