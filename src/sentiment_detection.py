@@ -4,6 +4,7 @@ import re
 import numpy as NP
 import pandas as PD
 import requests
+from numpy.lib.polynomial import polysub
 from tqdm import tqdm
 
 
@@ -54,6 +55,7 @@ class SentimentDetector:
         try:
             if self.df_lexicon is None or self.df_aspect_tokens.empty:
                 self.df_aspect_tokens = PD.read_csv(self.path + tokenFilename)
+                self.df_aspect_tokens["qualifier"] = NP.nan
 
             if self.df_preprocessed is None or self.df_preprocessed.empty:
                 self.df_preprocessed = PD.read_csv(self.path + preprocessedFilename)
@@ -67,28 +69,50 @@ class SentimentDetector:
                 if not os.path.exists(self.path + lexiconFilename):
                     self.downloadLexicon()
 
-                self.df_lexicon = PD.read_csv(self.path + lexiconFilename)
+                self.df_lexicon = PD.read_csv(
+                    self.path + lexiconFilename, index_col="word"
+                )
 
             return True
         except IOError as e:
             print(e)
             return False
 
-    def detectSentiment(self) -> None:
-        pass
+    def detectSentiment(self, rowDF: PD.Series) -> None:
+        window = self.df_preprocessed.iloc[rowDF["reviewnumber"]]["tokens"][
+            rowDF["word_idx"] - self.windowSize : rowDF["word_idx"] + self.windowSize
+        ]
+        for word in window:
+            try:
+                # print(self.df_aspect_tokens.iloc[rowDF.name])
+                if type(self.df_lexicon.loc[word]["qualifier"]) == str:
+                    self.df_aspect_tokens["qualifier"][
+                        rowDF.name
+                    ] = self.df_lexicon.loc[word]["qualifier"]
+                else:
+                    self.df_aspect_tokens["qualifier"][rowDF.name] = "|".join(
+                        self.df_lexicon.loc[word]["qualifier"].values
+                    )
+            except KeyError:
+                pass
 
-    def createWindow(self) -> None:
-        pass
+    def createLookupWindow(self) -> None:
+        tqdm.pandas(desc="Looking up Sentiments in windows")
+        self.df_aspect_tokens.progress_apply(lambda x: self.detectSentiment(x), axis=1)
 
     def run(self) -> bool:
         if not self.loadCSVs():
             print("Couldn't load CSV's.")
             return False
-        pass
         # self.df_aspect_tokens.apply()
+
+    def saveCSV(self, filename: str = "data_aspects_tokens.csv"):
+        self.df_aspect_tokens.to_csv(self.path + filename, index=False)
 
 
 if __name__ == "__main__":
     detector = SentimentDetector()
     detector.loadCSVs()
-    print(detector.df_preprocessed)
+    detector.createLookupWindow()
+    detector.saveCSV()
+    print(detector.df_aspect_tokens)
