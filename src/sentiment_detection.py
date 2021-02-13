@@ -66,7 +66,16 @@ class SentimentDetector:
         try:
             if self.df_lexicon is None or self.df_aspect_tokens.empty:
                 self.df_aspect_tokens = PD.read_csv(self.path + tokenFilename)
-                self.df_aspect_tokens["qualifier"] = NP.nan
+                # TODO drop duplicates
+                self.df_aspect_tokens.drop_duplicates(inplace=True)
+                self.df_aspect_tokens["qualifier"] = PD.NaT
+                self.df_aspect_tokens["qualifier"].fillna(
+                    {i: [] for i in self.df_aspect_tokens.index}, inplace=True
+                )
+                self.df_aspect_tokens["polarity_strength"] = PD.NaT
+                self.df_aspect_tokens["polarity_strength"].fillna(
+                    {i: [] for i in self.df_aspect_tokens.index}, inplace=True
+                )
 
             if self.df_preprocessed is None or self.df_preprocessed.empty:
                 self.df_preprocessed = PD.read_csv(self.path + preprocessedFilename)
@@ -103,13 +112,22 @@ class SentimentDetector:
         for word in window:
             try:
                 if type(self.df_lexicon.loc[word]["qualifier"]) == str:
-                    self.df_aspect_tokens["qualifier"][
-                        rowDF.name
-                    ] = self.df_lexicon.loc[word]["qualifier"]
-                else:
-                    self.df_aspect_tokens["qualifier"][rowDF.name] = "|".join(
-                        self.df_lexicon.loc[word]["qualifier"].values
+                    self.df_aspect_tokens["qualifier"][rowDF.name].append(
+                        self.df_lexicon.loc[word]["qualifier"]
                     )
+
+                    self.df_aspect_tokens["polarity_strength"][rowDF.name].append(
+                        self.df_lexicon.loc[word]["polarity_strength"]
+                    )
+                else:
+                    pass
+                    # this should be removed since there should be no dupliate entries in the sentiment lexicon
+
+                    # self.df_aspect_tokens["qualifier"][rowDF.name] = "|".join(
+                    #     self.df_lexicon.loc[word]["qualifier"].values
+                    # )
+                    # self.df_aspect_tokens["polarity_strength"][rowDF.name] = "|".join(
+                    #     self.df_lexicon.loc[word]["polarity_strength"].astype(str))
             except KeyError:
                 pass
 
@@ -141,4 +159,5 @@ if __name__ == "__main__":
     detector.loadCSVs()
     detector.createLookupWindow()
     detector.saveCSV()
+    # print(detector.df_preprocessed["tokens"][6134][33:40])
     print(detector.df_aspect_tokens)
