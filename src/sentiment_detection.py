@@ -64,7 +64,7 @@ class SentimentDetector:
             bool: sucessful execution
         """
         try:
-            if self.df_lexicon is None or self.df_aspect_tokens.empty:
+            if self.df_aspect_tokens is None or self.df_aspect_tokens.empty:
                 self.df_aspect_tokens = PD.read_csv(self.path + tokenFilename)
                 # TODO drop duplicates
                 self.df_aspect_tokens.drop_duplicates(inplace=True)
@@ -138,6 +138,43 @@ class SentimentDetector:
         tqdm.pandas(desc="Looking up Sentiments in windows")
         self.df_aspect_tokens.progress_apply(lambda x: self.detectSentiment(x), axis=1)
 
+    def convert_polarity(self, qualifier, polarity):
+        sentiment_polarity = []
+        for i, elem in enumerate(qualifier):
+            if elem == "NEG":
+                sentiment_polarity.append(polarity[i] * -1)
+            else:
+                sentiment_polarity.append(polarity[i])
+        sentiment_polarity = NP.mean(NP.array(sentiment_polarity))
+        return sentiment_polarity
+
+    def createReadableOutput(self, rowDF):
+        appenddict = {
+            "review_text": self.df_preprocessed.iloc[rowDF["reviewnumber"]][
+                "text_normalized"
+            ],
+            "sentiment": self.convert_polarity(
+                rowDF["qualifier"], rowDF["polarity_strength"]
+            ),
+        }
+
+        self.overall_sentiment = self.overall_sentiment.append(
+            appenddict, ignore_index=True
+        )
+
+    def returnSentimentsforReviews(self) -> PD.DataFrame:
+        self.overall_sentiment = PD.DataFrame(columns=["review_text", "sentiment"])
+        tqdm.pandas(desc="Calculating Sentiments")
+        self.df_aspect_tokens.progress_apply(
+            lambda x: self.createReadableOutput(x), axis=1
+        )
+
+        self.overall_sentiment = (
+            self.overall_sentiment.groupby("review_text").mean().reset_index()
+        )
+
+        return self.overall_sentiment
+
     def run(self) -> bool:
         """
         run all basic functions of the detector
@@ -159,5 +196,6 @@ if __name__ == "__main__":
     detector.loadCSVs()
     detector.createLookupWindow()
     detector.saveCSV()
-    # print(detector.df_preprocessed["tokens"][6134][33:40])
-    print(detector.df_aspect_tokens)
+
+    print(detector.returnSentimentsforReviews())
+    detector.overall_sentiment.to_csv("src/data/review_sentiments.csv", index=False)
