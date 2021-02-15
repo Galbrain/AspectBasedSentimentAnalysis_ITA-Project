@@ -4,6 +4,7 @@ import re
 import numpy as NP
 import pandas as PD
 import requests
+from numpy.core.fromnumeric import mean
 from numpy.lib.polynomial import polysub
 from tqdm import tqdm
 
@@ -150,9 +151,7 @@ class SentimentDetector:
 
     def createReadableOutput(self, rowDF):
         appenddict = {
-            "review_text": self.df_preprocessed.iloc[rowDF["reviewnumber"]][
-                "text_normalized"
-            ],
+            "review_number": rowDF["reviewnumber"],
             "sentiment": self.convert_polarity(
                 rowDF["qualifier"], rowDF["polarity_strength"]
             ),
@@ -170,8 +169,12 @@ class SentimentDetector:
         )
 
         self.overall_sentiment = (
-            self.overall_sentiment.groupby("review_text").mean().reset_index()
+            self.overall_sentiment.groupby("review_number").mean().reset_index()
         )
+        # print(self.overall_sentiment)
+        self.overall_sentiment["review_text"] = self.df_preprocessed["text_normalized"][
+            self.overall_sentiment["review_number"].astype(int).tolist()
+        ].tolist()
 
         return self.overall_sentiment
 
