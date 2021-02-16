@@ -4,6 +4,7 @@ import re
 
 import numpy as np
 import pandas as pd
+from tqdm import tqdm
 
 
 class AspectAnnotator:
@@ -34,13 +35,10 @@ class AspectAnnotator:
             filename (str, optional): String of path to the preprocessed data. Defaults to "data_preprocessed.csv".
         """
         self.data = pd.read_csv(self.path + filename)
-        self.data["tokens"] = (
-            self.data["tokens"]
-            .str.split(",", expand=True)
-            .replace(r"[\[\]]", "", regex=True)
-            .astype(str)
-            .values.tolist()
-        )
+
+        tqdm.pandas(desc="Applying Datatype Transformations...")
+        self.data["tokens"] = self.data["tokens"].progress_apply(
+            lambda x: re.sub(r"[\[\]'\s]*", "", x).split(","))
 
     def findAspects(self, rowDf: pd.DataFrame) -> None:
         """
