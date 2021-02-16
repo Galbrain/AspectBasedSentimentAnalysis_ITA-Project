@@ -13,11 +13,14 @@ spacy = "*"
 pre-commit = "*"
 numpy = "==1.19.5"
 tqdm = "*"
+nltk = "*"
+gensim = "*"
 
 [dev-packages]
 flake8 = "*"
 autopep8 = "*"
 coverage = "*"
+setuptools = "*"
 
 [scripts]
 test = "coverage run --include=src/*,tests/* --omit=*/__init__.py -m unittest discover -s ./tests -p *_test.py"

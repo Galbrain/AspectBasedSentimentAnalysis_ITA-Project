@@ -15,7 +15,7 @@ as script).
 """
 do_scraping = False
 do_processing = True
-do_annotation = False
+do_annotation = True
 do_sentimentanalysis = True
 
 Scraper = None
@@ -32,7 +32,7 @@ if __name__ == "__main__":
 
     if not os.path.exists("src/data/data_preprocessed.csv") or do_processing:
         Preper = Preprocessor(
-            lemmatize=False, lower=False, rmnonalphanumeric=True, rmstopwords=True
+            lemmatize=False, lower=False, rmnonalphanumeric=True, rmstopwords=False
         )
         Preper.loadSpacyModel(model="de_core_news_md")
         Preper.prep()

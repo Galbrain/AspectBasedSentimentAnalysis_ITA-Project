@@ -4,8 +4,6 @@ import re
 import numpy as NP
 import pandas as PD
 import requests
-from numpy.core.fromnumeric import mean
-from numpy.lib.polynomial import polysub
 from tqdm import tqdm
 
 
@@ -78,6 +76,11 @@ class SentimentDetector:
                     {i: [] for i in self.df_aspect_tokens.index}, inplace=True
                 )
 
+                self.df_aspect_tokens["sentiment_words"] = PD.NaT
+                self.df_aspect_tokens["sentiment_words"].fillna(
+                    {i: [] for i in self.df_aspect_tokens.index}, inplace=True
+                )
+
             if self.df_preprocessed is None or self.df_preprocessed.empty:
                 self.df_preprocessed = PD.read_csv(self.path + preprocessedFilename)
                 # pandas read_csv does not read arrays correctly so we need to adjust those
@@ -110,9 +113,13 @@ class SentimentDetector:
         window = self.df_preprocessed.iloc[rowDF["reviewnumber"]]["tokens"][
             rowDF["word_idx"] - self.windowSize : rowDF["word_idx"] + self.windowSize
         ]
-        for word in window:
+        for i, word in enumerate(window):
             try:
-                if type(self.df_lexicon.loc[word]["qualifier"]) == str:
+                if (
+                    type(self.df_lexicon.loc[word]["qualifier"]) == str
+                    and self.df_lexicon.loc[word]["pos"] == "adj"
+                    or "neg"
+                ):
                     self.df_aspect_tokens["qualifier"][rowDF.name].append(
                         self.df_lexicon.loc[word]["qualifier"]
                     )
@@ -120,8 +127,12 @@ class SentimentDetector:
                     self.df_aspect_tokens["polarity_strength"][rowDF.name].append(
                         self.df_lexicon.loc[word]["polarity_strength"]
                     )
+
+                    self.df_aspect_tokens["sentiment_words"][rowDF.name].append(word)
                 else:
                     pass
+                    print(word + " this word has this series as return: ")
+                    print(self.df_lexicon.loc[word]["qualifier"])
                     # this should be removed since there should be no dupliate entries in the sentiment lexicon
 
                     # self.df_aspect_tokens["qualifier"][rowDF.name] = "|".join(
@@ -178,6 +189,9 @@ class SentimentDetector:
 
         return self.overall_sentiment
 
+    def word2vec(self):
+        pass
+
     def run(self) -> bool:
         """
         run all basic functions of the detector
@@ -200,5 +214,11 @@ if __name__ == "__main__":
     detector.createLookupWindow()
     detector.saveCSV()
 
-    print(detector.returnSentimentsforReviews())
-    detector.overall_sentiment.to_csv("src/data/review_sentiments.csv", index=False)
+    print(detector.df_lexicon.loc["ungewöhnlich"])
+    print(detector.df_lexicon.loc["wenig"])
+    print(detector.df_preprocessed["tokens"][454][209:219])
+
+    # print(detector.df_lexicon.groupby("pos").count())
+
+    # print(detector.returnSentimentsforReviews())
+    # detector.overall_sentiment.to_csv("src/data/review_sentiments.csv", index=False)
