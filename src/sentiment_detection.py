@@ -1,9 +1,14 @@
 import os
 import re
 
+import nltk
 import numpy as NP
 import pandas as PD
 import requests
+import spacy
+from nltk import tokenize
+from nltk.tokenize import sent_tokenize
+from spacy import displacy
 from tqdm import tqdm
 
 
@@ -81,6 +86,13 @@ class SentimentDetector:
                     {i: [] for i in self.df_aspect_tokens.index}, inplace=True
                 )
 
+                self.df_aspect_tokens["word_found"] = self.df_aspect_tokens[
+                    "word_found"
+                ].str.replace(r"[^\w]*", "", regex=True)
+
+                # TODO remove after debugging
+                self.df_aspect_tokens = self.df_aspect_tokens[:10]
+
             if self.df_preprocessed is None or self.df_preprocessed.empty:
                 self.df_preprocessed = PD.read_csv(self.path + preprocessedFilename)
                 # pandas read_csv does not read arrays correctly so we need to adjust those
@@ -102,46 +114,133 @@ class SentimentDetector:
             print(e)
             return False
 
-    def detectSentiment(self, rowDF: PD.Series) -> None:
+    def loadSpacyModel(
+        self,
+        model: str = "de_core_news_lg",
+        disableList: list[str] = ["ner", "textcat"],
+    ) -> bool:
         """
-        take row of DF and extract review number, uses this review number to create a list of tokens that is [-windowsize:+windowsize].
-        then check for every word in that window if it is a key in the sentiment lexicon, if yes save the qualifier in the aspect_token dataset
+        load the spacy model with required modes
 
         Args:
-            rowDF (PD.Series): row of Dataframe
+            model (str, optional): name of the mode. Defaults to "de_core_news_sm".
+            disableList (list[str], optional): list of things to be disabled. Defaults to ["tagger", "parser", "ner"].
         """
-        window = self.df_preprocessed.iloc[rowDF["reviewnumber"]]["tokens"][
-            rowDF["word_idx"] - self.windowSize : rowDF["word_idx"] + self.windowSize
-        ]
-        for i, word in enumerate(window):
+        try:
+            self.nlp = spacy.load(model, disable=disableList)
+            return True
+        except OSError:
+            print("Model not found. Attempting to download..")
             try:
-                if (
-                    type(self.df_lexicon.loc[word]["qualifier"]) == str
-                    and self.df_lexicon.loc[word]["pos"] == "adj"
-                    or "neg"
-                ):
-                    self.df_aspect_tokens["qualifier"][rowDF.name].append(
-                        self.df_lexicon.loc[word]["qualifier"]
-                    )
+                spacy.cli.download(model)
+            except Exception as e:
+                print(e)
+                return False
+            self.nlp = spacy.load(model, disable=disableList)
+            return True
 
-                    self.df_aspect_tokens["polarity_strength"][rowDF.name].append(
-                        self.df_lexicon.loc[word]["polarity_strength"]
-                    )
+    def detectSentiment(self, rowDF: PD.Series) -> None:
+        if not self.loadSpacyModel():
+            return
 
-                    self.df_aspect_tokens["sentiment_words"][rowDF.name].append(word)
-                else:
-                    pass
-                    print(word + " this word has this series as return: ")
-                    print(self.df_lexicon.loc[word]["qualifier"])
-                    # this should be removed since there should be no dupliate entries in the sentiment lexicon
+        text = sent_tokenize(
+            self.df_preprocessed.iloc[rowDF["reviewnumber"]]["text_normalized"],
+            language="german",
+        )
 
-                    # self.df_aspect_tokens["qualifier"][rowDF.name] = "|".join(
-                    #     self.df_lexicon.loc[word]["qualifier"].values
-                    # )
-                    # self.df_aspect_tokens["polarity_strength"][rowDF.name] = "|".join(
-                    #     self.df_lexicon.loc[word]["polarity_strength"].astype(str))
-            except KeyError:
-                pass
+        for sentence in text:
+            if rowDF["word_found"] in sentence:
+                doc = self.nlp(sentence)
+
+                for token in doc:
+                    if token.text == rowDF["word_found"]:
+                        for i, child in enumerate(token.children):
+                            # print(child.tag_)
+                            if child.tag_ == "ADJA":
+                                # print("\n", child.text, child.lemma_)
+                                try:
+                                    if type(
+                                        self.df_lexicon.loc[child.text]["qualifier"]
+                                    ) == str and self.df_lexicon.loc[child.text][
+                                        "pos"
+                                    ] in [
+                                        "adj, neg"
+                                    ]:
+                                        self.df_aspect_tokens["qualifier"][
+                                            rowDF.name
+                                        ].append(
+                                            self.df_lexicon.loc[child.text]["qualifier"]
+                                        )
+
+                                        self.df_aspect_tokens["polarity_strength"][
+                                            rowDF.name
+                                        ].append(
+                                            self.df_lexicon.loc[child.text][
+                                                "polarity_strength"
+                                            ]
+                                        )
+
+                                        self.df_aspect_tokens["sentiment_words"][
+                                            rowDF.name
+                                        ].append(child.text)
+                                except KeyError:
+                                    pass
+                            # """
+                            # take row of DF and extract review number, uses this review number to create a list of tokens that is [-windowsize:+windowsize].
+                            # then check for every word in that window if it is a key in the sentiment lexicon, if yes save the qualifier in the aspect_token dataset
+
+                            # Args:
+                            #     rowDF (PD.Series): row of Dataframe
+                            # """
+                            # window = self.df_preprocessed.iloc[rowDF["reviewnumber"]]["tokens"][
+                            #     rowDF["word_idx"] - self.windowSize: rowDF["word_idx"] + self.windowSize
+                            # ]
+
+                            # for i, word in enumerate(window):
+                            #     try:
+                            #         if (
+                            #             type(self.df_lexicon.loc[word]["qualifier"]) == str
+                            #             and self.df_lexicon.loc[word]["pos"] in ["adj", "neg"]
+                            #         ):
+                            #             self.df_aspect_tokens["qualifier"][rowDF.name].append(
+                            #                 self.df_lexicon.loc[word]["qualifier"]
+                            #             )
+
+                            #             self.df_aspect_tokens["polarity_strength"][rowDF.name].append(
+                            #                 self.df_lexicon.loc[word]["polarity_strength"]
+                            #             )
+
+                            #             self.df_aspect_tokens["sentiment_words"][
+                            #                 rowDF.name].append(word)
+
+                            #         else:
+                            #             pass
+                            #         # elif self.df_lexicon.loc[word]["pos"] in ["adj", "neg"] and self.df_lexicon.loc[window[i]]["qualifier"].any() in ["POS", "NEG"]:
+                            #     lexicon_row = self.df_lexicon.loc[word]
+                            #     print(lexicon_row.values)
+                            #     lexicon_row.drop(
+                            #         lexicon_row
+                            #         [lexicon_row["qualifier"] in ["POS", "NEG"]],
+                            #         inplace=True)
+                            #     self.df_aspect_tokens["qualifier"][rowDF.name].append(
+                            #     )
+                            #     print(lexicon_row)
+
+                            #     self.df_aspect_tokens["polarity_strength"][rowDF.name].append(
+                            #         self.df_lexicon.loc[word]["polarity_strength"]
+                            #     )
+
+                            #     self.df_aspect_tokens["sentiment_words"][
+                            #         rowDF.name].append(word)
+                            # this should be removed since there should be no dupliate entries in the sentiment lexicon
+
+                            # self.df_aspect_tokens["qualifier"][rowDF.name] = "|".join(
+                            #     self.df_lexicon.loc[word]["qualifier"].values
+                            # )
+                            # self.df_aspect_tokens["polarity_strength"][rowDF.name] = "|".join(
+                            #     self.df_lexicon.loc[word]["polarity_strength"].astype(str))
+                            # except KeyError:
+                            #     pass
 
     def createLookupWindow(self) -> None:
         """
@@ -202,6 +301,8 @@ class SentimentDetector:
         if not self.loadCSVs():
             print("Couldn't load CSV's.")
             return False
+
+        nltk.download("punkt", download_dir=".venv")
         # self.df_aspect_tokens.apply()
 
     def saveCSV(self, filename: str = "data_aspects_tokens.csv"):
@@ -213,10 +314,6 @@ if __name__ == "__main__":
     detector.loadCSVs()
     detector.createLookupWindow()
     detector.saveCSV()
-
-    print(detector.df_lexicon.loc["ungewöhnlich"])
-    print(detector.df_lexicon.loc["wenig"])
-    print(detector.df_preprocessed["tokens"][454][209:219])
 
     # print(detector.df_lexicon.groupby("pos").count())
 

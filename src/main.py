@@ -32,7 +32,7 @@ if __name__ == "__main__":
 
     if not os.path.exists("src/data/data_preprocessed.csv") or do_processing:
         Preper = Preprocessor(
-            lemmatize=False, lower=False, rmnonalphanumeric=True, rmstopwords=False
+            lemmatize=False, lower=False, rmnonalphanumeric=False, rmstopwords=False
         )
         Preper.loadSpacyModel(model="de_core_news_md")
         Preper.prep()
