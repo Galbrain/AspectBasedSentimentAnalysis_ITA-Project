@@ -1,4 +1,5 @@
 import io
+import os
 import re
 from io import BytesIO
 from urllib.request import urlopen
@@ -9,6 +10,7 @@ import numpy as NP
 import pandas as PD
 import requests
 import spacy
+from germalemma import GermaLemma
 from nltk.tokenize import sent_tokenize
 from spacy import displacy
 from tqdm import tqdm
@@ -23,6 +25,8 @@ class SentimentDetector:
         self.df_aspect_tokens = None
         self.df_preprocessed = None
         self.df_lexicon = None
+
+        self.lemmatizer = GermaLemma()
 
     def downloadLexicon(
         self,
