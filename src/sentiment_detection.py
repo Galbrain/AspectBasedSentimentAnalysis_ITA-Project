@@ -107,13 +107,13 @@ class SentimentDetector:
                     "tokens"
                 ].progress_apply(lambda x: re.sub(r"[\[\]'\s]*", "", x).split(","))
 
-            # if self.df_lexicon is None or self.df_lexicon.empty:
-            #     if not os.path.exists(self.path + lexiconFilename):
-            #         self.downloadLexicon()
+            if self.df_lexicon is None or self.df_lexicon.empty:
+                if not os.path.exists(self.path + lexiconFilename):
+                    self.downloadLexicon()
 
-            #     self.df_lexicon = PD.read_csv(
-            #         self.path + lexiconFilename, index_col="word"
-            #     )
+                self.df_lexicon = PD.read_csv(
+                    self.path + lexiconFilename, index_col="word"
+                )
 
             return True
         except IOError as e:
@@ -151,30 +151,42 @@ class SentimentDetector:
             language="german",
         )
 
-        for sentence in text:
+        for sentence in text[:100]:
             if rowDF["word_found"] in sentence:
-                doc = self.nlp(sentence)
+                doc = self.nlp('Die sehr gute Grafik.')
+                subtree = doc[1].subtree
+                for elem in subtree:
+                    print(elem.text)
+                displacy.serve(doc)
 
                 for token in doc:
                     if token.text == rowDF["word_found"]:
                         for i, child in enumerate(token.children):
-                            # print(child.tag_)
-                            if child.tag_ == "ADJA":
+                            # if child.tag_ == "ADJA":
+                            if child.tag_ == "ADJA" and child.pos_ == "ADJ":
                                 try:
-                                    # self.df_aspect_tokens["qualifier"][
-                                    #     rowDF.name
-                                    # ].append(
-                                    #     self.df_lexicon.loc[lemma]["qualifier"]
-                                    # )
+                                    for c in child.children:
+                                        lec = self.df_lexicon.loc[c.text]
+
+                                        if type(lec) == str:
+                                            if lec['qualifier'] == 'INT':
+                                                pass
+                                            elif lec['qualifier'] == 'NEG':
+                                                pass
+                                            else:
+                                                pass
+                                        else:
+                                            pass
+                                    # lemmatize the words (if possible)
+                                    # print('\n', child.text, child.pos_)
+                                    lemma = self.lemmatizer.find_lemma(
+                                        child.text, child.pos_)
+                                    pol_strength = self.df_lexicon.loc[lemma][
+                                        "polarity_strength"]
 
                                     self.df_aspect_tokens["polarity_strength"][
                                         rowDF.name
-                                    ].append(
-                                        lemmatizer.determine(child.text, "ADJ")
-                                        # self.df_lexicon.loc[lemma][
-                                        #     "polarity_strength"
-                                        # ]
-                                    )
+                                    ].append(pol_strength)
 
                                     self.df_aspect_tokens["sentiment_words"][
                                         rowDF.name
