@@ -1,15 +1,18 @@
-import os
+import io
 import re
+from io import BytesIO
+from urllib.request import urlopen
+from zipfile import ZipFile
 
 import nltk
 import numpy as NP
 import pandas as PD
 import requests
 import spacy
-from nltk import tokenize
 from nltk.tokenize import sent_tokenize
 from spacy import displacy
 from tqdm import tqdm
+from utils.senti_ws_wrapper import SentiWSWrapper
 
 
 class SentimentDetector:
@@ -70,12 +73,11 @@ class SentimentDetector:
         try:
             if self.df_aspect_tokens is None or self.df_aspect_tokens.empty:
                 self.df_aspect_tokens = PD.read_csv(self.path + tokenFilename)
-                # TODO drop duplicates
                 self.df_aspect_tokens.drop_duplicates(inplace=True)
-                self.df_aspect_tokens["qualifier"] = PD.NaT
-                self.df_aspect_tokens["qualifier"].fillna(
-                    {i: [] for i in self.df_aspect_tokens.index}, inplace=True
-                )
+                # self.df_aspect_tokens["qualifier"] = PD.NaT
+                # self.df_aspect_tokens["qualifier"].fillna(
+                #     {i: [] for i in self.df_aspect_tokens.index}, inplace=True
+                # )
                 self.df_aspect_tokens["polarity_strength"] = PD.NaT
                 self.df_aspect_tokens["polarity_strength"].fillna(
                     {i: [] for i in self.df_aspect_tokens.index}, inplace=True
@@ -91,7 +93,7 @@ class SentimentDetector:
                 ].str.replace(r"[^\w]*", "", regex=True)
 
                 # TODO remove after debugging
-                self.df_aspect_tokens = self.df_aspect_tokens[:10]
+                # self.df_aspect_tokens = self.df_aspect_tokens[:100]
 
             if self.df_preprocessed is None or self.df_preprocessed.empty:
                 self.df_preprocessed = PD.read_csv(self.path + preprocessedFilename)
@@ -101,13 +103,13 @@ class SentimentDetector:
                     "tokens"
                 ].progress_apply(lambda x: re.sub(r"[\[\]'\s]*", "", x).split(","))
 
-            if self.df_lexicon is None or self.df_lexicon.empty:
-                if not os.path.exists(self.path + lexiconFilename):
-                    self.downloadLexicon()
+            # if self.df_lexicon is None or self.df_lexicon.empty:
+            #     if not os.path.exists(self.path + lexiconFilename):
+            #         self.downloadLexicon()
 
-                self.df_lexicon = PD.read_csv(
-                    self.path + lexiconFilename, index_col="word"
-                )
+            #     self.df_lexicon = PD.read_csv(
+            #         self.path + lexiconFilename, index_col="word"
+            #     )
 
             return True
         except IOError as e:
@@ -116,7 +118,7 @@ class SentimentDetector:
 
     def loadSpacyModel(
         self,
-        model: str = "de_core_news_lg",
+        model: str = "de_core_news_md",
         disableList: list[str] = ["ner", "textcat"],
     ) -> bool:
         """
@@ -139,10 +141,7 @@ class SentimentDetector:
             self.nlp = spacy.load(model, disable=disableList)
             return True
 
-    def detectSentiment(self, rowDF: PD.Series) -> None:
-        if not self.loadSpacyModel():
-            return
-
+    def detectSentiment(self, rowDF: PD.Series, lemmatizer) -> None:
         text = sent_tokenize(
             self.df_preprocessed.iloc[rowDF["reviewnumber"]]["text_normalized"],
             language="german",
@@ -157,32 +156,25 @@ class SentimentDetector:
                         for i, child in enumerate(token.children):
                             # print(child.tag_)
                             if child.tag_ == "ADJA":
-                                # print("\n", child.text, child.lemma_)
                                 try:
-                                    if type(
-                                        self.df_lexicon.loc[child.text]["qualifier"]
-                                    ) == str and self.df_lexicon.loc[child.text][
-                                        "pos"
-                                    ] in [
-                                        "adj, neg"
-                                    ]:
-                                        self.df_aspect_tokens["qualifier"][
-                                            rowDF.name
-                                        ].append(
-                                            self.df_lexicon.loc[child.text]["qualifier"]
-                                        )
+                                    # self.df_aspect_tokens["qualifier"][
+                                    #     rowDF.name
+                                    # ].append(
+                                    #     self.df_lexicon.loc[lemma]["qualifier"]
+                                    # )
 
-                                        self.df_aspect_tokens["polarity_strength"][
-                                            rowDF.name
-                                        ].append(
-                                            self.df_lexicon.loc[child.text][
-                                                "polarity_strength"
-                                            ]
-                                        )
+                                    self.df_aspect_tokens["polarity_strength"][
+                                        rowDF.name
+                                    ].append(
+                                        lemmatizer.determine(child.text, "ADJ")
+                                        # self.df_lexicon.loc[lemma][
+                                        #     "polarity_strength"
+                                        # ]
+                                    )
 
-                                        self.df_aspect_tokens["sentiment_words"][
-                                            rowDF.name
-                                        ].append(child.text)
+                                    self.df_aspect_tokens["sentiment_words"][
+                                        rowDF.name
+                                    ].append(child.text)
                                 except KeyError:
                                     pass
                             # """
@@ -246,8 +238,15 @@ class SentimentDetector:
         """
         function to vectorize detectSentiment()
         """
+        if not self.loadSpacyModel():
+            return
+
+        lemmatizer = SentiWSWrapper("src/data/")
+
         tqdm.pandas(desc="Looking up Sentiments in windows")
-        self.df_aspect_tokens.progress_apply(lambda x: self.detectSentiment(x), axis=1)
+        self.df_aspect_tokens.progress_apply(
+            lambda x: self.detectSentiment(x, lemmatizer), axis=1
+        )
 
     def convert_polarity(self, qualifier, polarity):
         sentiment_polarity = []
@@ -288,8 +287,14 @@ class SentimentDetector:
 
         return self.overall_sentiment
 
-    def word2vec(self):
-        pass
+    def downloadSW(
+        self,
+        url="https://pcai056.informatik.uni-leipzig.de/downloads/etc/SentiWS/SentiWS_v2.0.zip",
+        path="src/data",
+    ):
+        with urlopen(url) as zipresp:
+            with ZipFile(BytesIO(zipresp.read())) as zfile:
+                zfile.extractall(path)
 
     def run(self) -> bool:
         """
@@ -302,8 +307,11 @@ class SentimentDetector:
             print("Couldn't load CSV's.")
             return False
 
+        self.downloadSW()
+
         nltk.download("punkt", download_dir=".venv")
-        # self.df_aspect_tokens.apply()
+
+        self.createLookupWindow()
 
     def saveCSV(self, filename: str = "data_aspects_tokens.csv"):
         self.df_aspect_tokens.to_csv(self.path + filename, index=False)
@@ -311,8 +319,7 @@ class SentimentDetector:
 
 if __name__ == "__main__":
     detector = SentimentDetector()
-    detector.loadCSVs()
-    detector.createLookupWindow()
+    detector.run()
     detector.saveCSV()
 
     # print(detector.df_lexicon.groupby("pos").count())

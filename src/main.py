@@ -14,7 +14,7 @@ The code that is actually executed is the one below 'if __name__ ...' (if run
 as script).
 """
 do_scraping = False
-do_processing = True
+do_processing = False
 do_annotation = True
 do_sentimentanalysis = True
 
@@ -49,4 +49,4 @@ if __name__ == "__main__":
         if Preper:
             Detector.df_preprocessed = Preper.data
         Detector.run()
-        print(Detector.df_preprocessed)
+        Detector.saveCSV()
