@@ -14,7 +14,6 @@ from germalemma import GermaLemma
 from nltk.tokenize import sent_tokenize
 from spacy import displacy
 from tqdm import tqdm
-from utils.senti_ws_wrapper import SentiWSWrapper
 
 
 class SentimentDetector:
@@ -392,11 +391,9 @@ class SentimentDetector:
         if not self.loadSpacyModel():
             return
 
-        lemmatizer = SentiWSWrapper("src/data/")
-
         tqdm.pandas(desc="Looking up Sentiments in windows")
         self.df_aspect_tokens.progress_apply(
-            lambda x: self.detectSentiment(x, lemmatizer), axis=1
+            lambda x: self.detectSentiment(x), axis=1
         )
 
     def convert_polarity(self, qualifier, polarity):
@@ -438,15 +435,6 @@ class SentimentDetector:
 
         return self.overall_sentiment
 
-    def downloadSW(
-        self,
-        url="https://pcai056.informatik.uni-leipzig.de/downloads/etc/SentiWS/SentiWS_v2.0.zip",
-        path="src/data",
-    ):
-        with urlopen(url) as zipresp:
-            with ZipFile(BytesIO(zipresp.read())) as zfile:
-                zfile.extractall(path)
-
     def run(self) -> bool:
         """
         run all basic functions of the detector
@@ -457,8 +445,6 @@ class SentimentDetector:
         if not self.loadCSVs():
             print("Couldn't load CSV's.")
             return False
-
-        self.downloadSW()
 
         nltk.download("punkt", download_dir=".venv")
 

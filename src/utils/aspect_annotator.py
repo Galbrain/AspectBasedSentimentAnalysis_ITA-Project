@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import json
 import os
 import re
 
@@ -24,7 +25,7 @@ class AspectAnnotator:
         self.data = data
         self.keyWords = keyWords
         self.df = pd.DataFrame(
-            columns=["reviewnumber", "word_found", "word_idx", "aspect"]
+            columns=["reviewnumber", "word_found", "sent_idx", "word_idx", "aspect"]
         )
 
     def loadCSV(self, filename: str = "data_preprocessed.csv") -> None:
@@ -35,12 +36,9 @@ class AspectAnnotator:
             filename (str, optional): String of path to the preprocessed data. Defaults to "data_preprocessed.csv".
         """
         self.data = pd.read_csv(self.path + filename)
-        self.data["tokens"] = (
-            self.data["tokens"]
-            .str.split(",", expand=True)
-            .replace(r"[\[\]]", "", regex=True)
-            .astype(str)
-            .values.tolist()
+        tqdm.pandas(desc="Loading Tokens..")
+        self.data["tokens"] = self.data["tokens"].progress_apply(
+            lambda x: json.loads(x)
         )
 
     def findAspects(self, rowDf: pd.DataFrame) -> None:
@@ -54,14 +52,16 @@ class AspectAnnotator:
         for aspect in self.keyWords:
             compare = self.keyWords[aspect]
 
-            for i, elem in enumerate(rowDf["tokens"]):
-                for e in compare:
-                    if e in elem.lower():
-                        aspects["reviewnumber"] = rowDf.name
-                        aspects["word_found"] = elem
-                        aspects["word_idx"] = i
-                        aspects["aspect"] = aspect
-                        self.df = self.df.append(aspects, ignore_index=True)
+            for i, sent in enumerate(rowDf["tokens"]):
+                for j, word in enumerate(sent):
+                    for e in compare:
+                        if e in word.lower():
+                            aspects["reviewnumber"] = rowDf.name
+                            aspects["word_found"] = word
+                            aspects["sent_idx"] = i
+                            aspects["word_idx"] = j
+                            aspects["aspect"] = aspect
+                            self.df = self.df.append(aspects, ignore_index=True)
 
     def annotate(self) -> None:
         """
