@@ -153,7 +153,9 @@ class SentimentDetector:
             language="german",
         )
 
-        for sentence in text[:100]:
+        # TODO FIX THIS MESS THIS IS NOT WORKING
+        # might have to redo aspect_detection to return the sentence index
+        for sentence in text:
             if rowDF["word_found"] in sentence:
                 doc = self.nlp(sentence)
 
@@ -471,7 +473,7 @@ if __name__ == "__main__":
     detector.run()
     detector.saveCSV()
     # detector.loadCSVs()
-    # print(detector.df_preprocessed.iloc[184]["text_normalized"])
+    print(detector.df_preprocessed.iloc[14]["text_normalized"])
 
     # print(detector.returnSentimentsforReviews())
     # detector.overall_sentiment.to_csv("src/data/review_sentiments.csv", index=False)
