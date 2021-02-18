@@ -7,6 +7,22 @@ import spacy
 from gensim.models import Word2Vec
 from tqdm import tqdm
 
+
+def train_w2v(reviews):
+
+    def hash(astring):
+        return ord(astring[0])
+
+    w2v = Word2Vec(
+        min_count=2, size=100, alpha=0.03, negative=20, window=3, min_alpha=0.0001,
+        sample=0.00006, hashfxn=hash, workers=1)  # your code ###
+    w2v.build_vocab(reviews)
+    w2v.train(reviews, total_examples=w2v.corpus_count, epochs=100)
+    w2v.init_sims()
+    w2v.wv.save_word2vec_format('src/data/w2v_model.bin', binary=True)
+    return w2v
+
+
 def get_most_similar(aspect, reviews_raw_series=None):
 
     w2v = None
