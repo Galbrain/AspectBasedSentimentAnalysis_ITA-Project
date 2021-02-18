@@ -36,7 +36,6 @@ if __name__ == "__main__":
         )
         Preper.loadSpacyModel(model="de_core_news_md")
         Preper.prep()
-        print(Preper.data)
         Preper.saveCSV()
 
     if not os.path.exists("src/data/data_aspects_tokens.csv") or do_annotation:

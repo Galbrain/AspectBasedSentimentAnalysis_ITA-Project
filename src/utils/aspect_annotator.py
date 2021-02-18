@@ -24,6 +24,9 @@ class AspectAnnotator:
         self.path = path
         self.data = data
         self.keyWords = keyWords
+        if os.path.exists("src/data/aspectDict.json"):
+            with open("src/data/aspectDict.json") as f:
+                self.keyWords = json.load(f)
         self.df = pd.DataFrame(
             columns=["reviewnumber", "word_found", "sent_idx", "word_idx", "aspect"]
         )
