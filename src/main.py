@@ -12,7 +12,7 @@ The code that is actually executed is the one below 'if __name__ ...' (if run
 as script).
 """
 do_scraping = True
-do_processing = False
+do_processing = True
 do_annotation = False
 
 if __name__ == "__main__":
