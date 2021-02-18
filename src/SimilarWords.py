@@ -23,6 +23,25 @@ def train_w2v(reviews):
     return w2v
 
 
+def normalize_text(reviews_raw_series):
+    # TO DO: use preprocessor
+    def normalize(quote):
+        quote = quote.lower()
+        quote = re.sub(r'[^a-z0-9 ]', '', quote)
+        return quote
+
+    nlp = spacy.load("de_core_news_lg", disable=["tagger", "parser", "ner"])
+    stopwords = spacy.lang.de.stop_words.STOP_WORDS
+
+    tqdm.pandas(desc="Normalizing Text....")
+    normalized_text = reviews_raw_series.progress_apply(normalize)
+    tqdm.pandas(desc="Tokenizing Text....")
+    normalized_text = normalized_text.progress_apply(
+        lambda x: [token.text for token in nlp(x) if token not in stopwords])
+    tokens = normalized_text.tolist()
+    return tokens
+
+
 def get_most_similar(aspect, reviews_raw_series=None):
 
     w2v = None
