@@ -19,8 +19,8 @@ if __name__ == "__main__":
     if not os.path.exists("src/data/data_raw.csv") or do_scraping:
         urls = NP.loadtxt("src/utils/urls.txt", dtype=str, comments="!")
         Scraper = WebScraper(urls)
-        Scraper.start_scraping()
-        Scraper.store_data()
+        Scraper.startScraping()
+        Scraper.storeData()
 
     if not os.path.exists("src/data/data_preprocessed.csv") or do_processing:
         Preper = Preprocessor(
