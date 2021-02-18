@@ -1,13 +1,9 @@
 # -*- coding: utf-8 -*-
 import glob
 import json
-import re
-from datetime import date
-from unittest.main import main
 
 import pandas as pd
 import spacy
-from nltk import data
 from nltk.tokenize import sent_tokenize, word_tokenize
 from tqdm import tqdm
 
