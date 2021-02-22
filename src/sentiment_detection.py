@@ -148,7 +148,7 @@ class SentimentDetector:
 
     def checkValidChild(self, child, childType: ChildType) -> bool:
         if childType == ChildType.DESCRIPTOR:
-            if ((child.tag_ == "ADJA" and child.pos_ == "ADJ") or (child.pos_ == "ADV")):
+            if (child.tag_ == "ADJA" and child.pos_ == "ADJ") or (child.pos_ == "ADV"):
                 return True
             return False
         elif childType == ChildType.INTENSIFIER:
@@ -170,7 +170,8 @@ class SentimentDetector:
             pol_strength (float): polarity_strength of given word found in sentiment lexicon
         """
         lemma = self.lemmatizer.find_lemma(
-            child.text.replace(r"[^\w]*", ""), child.pos_)
+            child.text.replace(r"[^\w]*", ""), child.pos_
+        )
 
         # catch words that are not in the sentiment lexicon
         try:
@@ -181,16 +182,16 @@ class SentimentDetector:
 
         if type(lexEntry["qualifier"]) == str:
             pol_strength = lexEntry["polarity_strength"]
-            if lexEntry["qualifier"] == 'NEG':
+            if lexEntry["qualifier"] == "NEG":
                 return -pol_strength
             return pol_strength
         else:
-            for i, qualifier in enumerate(lexEntry['qualifier'].values):
-                if qualifier == 'POS':
-                    return lexEntry['polarity_strength'][i]
-                if qualifier == 'NEG':
-                    return -lexEntry['polarity_strength'][i]
-            return pol_strength
+            for i, qualifier in enumerate(lexEntry["qualifier"].values):
+                if qualifier == "POS":
+                    return lexEntry["polarity_strength"][i]
+                if qualifier == "NEG":
+                    return -lexEntry["polarity_strength"][i]
+            return 0
 
     def checkForIntensifier(self, child) -> float:
         """
@@ -242,7 +243,7 @@ class SentimentDetector:
 
         # find intensifier in children and multiply their strength to the polarity
         for c in child.children:
-            if (self.checkValidChild(c, ChildType.INTENSIFIER)):
+            if self.checkValidChild(c, ChildType.INTENSIFIER):
                 polarity_strength *= self.checkForIntensifier(c)
         return polarity_strength
 
@@ -262,9 +263,9 @@ class SentimentDetector:
                     if self.checkValidChild(child, ChildType.DESCRIPTOR):
                         pol_strength = self.calcTotalPolarityStrength(child)
 
-                        self.df_aspect_tokens["polarity_strength"][
-                            rowDF.name
-                        ].append(pol_strength)
+                        self.df_aspect_tokens["polarity_strength"][rowDF.name].append(
+                            pol_strength
+                        )
 
                         self.df_aspect_tokens["sentiment_words"][rowDF.name].append(
                             child.text
@@ -282,8 +283,8 @@ class SentimentDetector:
                                 ].append(pol_strength)
 
                                 self.df_aspect_tokens["sentiment_words"][
-                                    rowDF.name].append(
-                                    child.text)
+                                    rowDF.name
+                                ].append(child.text)
 
                                 return
 
