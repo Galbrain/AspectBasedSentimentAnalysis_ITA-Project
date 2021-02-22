@@ -74,14 +74,14 @@ class WebScraper:
             return
 
         # get the content once to find out how many total reviews there are
-        content = self.get_response(game_id, 0, 1)
+        content = self.getResponse(game_id, 0, 1)
         total_num_reviews = content["response"]["data"]["more"]
 
         # iterate over the total reviews in steps of 10
         offset = 0
         while total_num_reviews - offset > 0:
             offset += 10
-            content = self.get_response(game_id, offset, 10)
+            content = self.getResponse(game_id, offset, 10)
             self.parseResponse(content)
 
     def startScraping(self):
