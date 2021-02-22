@@ -1,21 +1,9 @@
 import json
-import re
-import time
 
 import pandas as pd
 import requests
-import selenium
 from bs4 import BeautifulSoup
-from selenium import webdriver
-from selenium.common.exceptions import (
-    ElementClickInterceptedException,
-    ElementNotInteractableException,
-    NoSuchElementException,
-)
-from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.ui import WebDriverWait
+from tqdm import tqdm
 
 
 class WebScraper:
@@ -24,91 +12,83 @@ class WebScraper:
     """
 
     def __init__(self, urls: list[str]):
-
         self.urls = urls
-        self.driver = webdriver.Firefox(executable_path=r".venv/geckodriver.exe")
-        self.driver.implicitly_wait(10)
-        self.data = pd.DataFrame
+        self.data = pd.DataFrame(
+            columns=[
+                "titel",
+                "review_text_raw",
+                "Grafik",
+                "Sound",
+                "Steuerung",
+                "Atmosphäre",
+            ]
+        )
 
-    def scrape_page(self, url: str):
-
-        driver = self.driver
-        driver.get(url)
-
-        soup = BeautifulSoup(driver.page_source, "html.parser")
-
-        iframes_size = len(driver.find_elements_by_xpath("//iframe"))
-
-        for iframe_index in range(iframes_size):
-
-            driver.switch_to.frame(iframe_index)
-            button_path = "/html/body/div/div[3]/div[2]/button"
-            # button_path = "/html/body/div/div[3]/div[4]/button"
-            try:
-                button = driver.find_element_by_xpath(button_path)
-                button.click()
-                driver.switch_to.default_content()
-            except ElementNotInteractableException:  # TODO: THIS IS PROBABLY WRONG
-                driver.switch_to.default_content()
-                continue
-            break
-
-        title = soup.find("h1").get_text()
-        while True:
-            try:
-                button = driver.find_element_by_partial_link_text("weitere Artikel")
-
-            except NoSuchElementException:
-                try:
-                    button_path = "//span[@class='chevron-down']"
-                    button = driver.find_element_by_xpath(button_path)
-                except NoSuchElementException:
-                    print("except")
-                    break
-
-            soup = BeautifulSoup(driver.page_source, "html.parser")
-            try:
-                button.click()
-            except ElementClickInterceptedException:
-                self.driver.implicitly_wait(10)
-                button_path = "//button[@class='cleverpush-confirm-btn cleverpush-confirm-btn-deny'][.='später']"
-                button = driver.find_element_by_xpath(button_path)
-                button.click()
-
-        opinions_tags = soup.find_all("div", class_="collapse")
-
-        review_summaries = pd.DataFrame(columns=["title", "review_text_raw", "rating"])
-
-        for opinion_tag in opinions_tags:
-
-            stars = dict()
-            for i, aspect in enumerate(opinion_tag.find_all("dt")):
-                stars_container = opinion_tag.find_all("dd")
-                stars_amount1 = len(stars_container[i].find_all("i", class_="fa-star"))
-                stars_amount2 = len(
-                    stars_container[i].find_all("img", class_="stiDetailratingStarOn")
-                )
-                stars_amount = max(stars_amount1, stars_amount2)
-                stars[aspect.get_text().strip(":")] = stars_amount
-
-            dls = opinion_tag.find_all("dl")
-            for dl in dls:
-                dl.decompose()
-
-            review_summary = {
-                "title": title,
-                "review_text_raw": opinion_tag.get_text(),
+    def parseResponse(self, content: dict) -> None:
+        # create a dict for every review and append the data to the dataframe
+        for i in content["response"]["data"]["data"]:
+            reviewDict = {
+                "titel": i["game"],
+                "review_text_raw": i["content"]
+                .replace("<br />", "")
+                .replace("&quot;", "")
+                .replace("\n", ""),
+                "Grafik": i["ratingDetail"]["score_graphics"],
+                "Sound": i["ratingDetail"]["score_sound"],
+                "Steuerung": i["ratingDetail"]["score_gameplay"],
+                "Atmosphäre": i["ratingDetail"]["score_atmosphere"],
             }
-            review_summaries.append(review_summary, ignore_index=True)
+            self.data = self.data.append(reviewDict, ignore_index=True)
 
-        return review_summaries
+    def getResponse(self, game_id: int, offset: int, limit: int) -> dict:
+        content_url = "https://www.spieletipps.de/gameopinion/opinion-xhr/"
+        game_data = {"id": game_id, "offset": offset, "limit": limit}
 
-    def start_scraping(self):
-        for url in self.urls:
-            df_review = self.scrape_page(url)
-            self.data.append(df_review, ignore_index=True)
+        content = requests.get(content_url, params=game_data)
+        return json.loads(content.text)
 
-    def store_data(self, path: str = "src/data/"):
-        self.data.to_csv(path + "raw_data.csv", index=False)
+    def getGameID(self, url: str) -> int:
+        website = requests.get(url)
+        soup = BeautifulSoup(website.text, "html.parser")
+
+        # find the "more" button
+        sticontents = soup.find(
+            "div", class_="stiContents stiNoDeco stiOptionsLoadMore mb-3"
+        )
+        if sticontents:
+            return sticontents.get("data-gameid")
+        else:
+            return None
+
+    def scrapePage(self, url: str) -> None:
+        """
+        Extract the Game_id from the Website link, then use the Spieletipps API to get the content
+
+        Args:
+            url (str): url of Game
+        """
+
+        # if there is a more button extract the game_id
+        game_id = self.getGameID(url)
+        if not game_id:
+            return
+
+        # get the content once to find out how many total reviews there are
+        content = self.get_response(game_id, 0, 1)
+        total_num_reviews = content["response"]["data"]["more"]
+
+        # iterate over the total reviews in steps of 10
+        offset = 0
+        while total_num_reviews - offset > 0:
+            offset += 10
+            content = self.get_response(game_id, offset, 10)
+            self.parseResponse(content)
+
+    def startScraping(self):
+        for url in tqdm(self.urls, desc="Scraping Urls.."):
+            self.scrapePage(url)
+
+    def storeData(self, path: str = "src/data/", filename: str = "data_raw.csv"):
+        self.data.to_csv(path + filename, index=False)
 
     # web_scraper.store_data() # currently not neccessary, since start_scraping already stores gathered data for each url
