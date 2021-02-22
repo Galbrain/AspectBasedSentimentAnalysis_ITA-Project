@@ -14,9 +14,9 @@ The code that is actually executed is the one below 'if __name__ ...' (if run
 as script).
 """
 do_scraping = False
-do_processing = False
+do_processing = True
 do_annotation = True
-do_sentimentanalysis = True
+do_sentimentanalysis = False
 
 Scraper = None
 Preper = None
