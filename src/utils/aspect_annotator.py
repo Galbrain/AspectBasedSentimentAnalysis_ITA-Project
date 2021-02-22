@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import json
 import os
 import re
 
@@ -23,8 +24,11 @@ class AspectAnnotator:
         self.path = path
         self.data = data
         self.keyWords = keyWords
+        if os.path.exists("src/data/aspectDict.json"):
+            with open("src/data/aspectDict.json") as f:
+                self.keyWords = json.load(f)
         self.df = pd.DataFrame(
-            columns=["reviewnumber", "word_found", "word_idx", "aspect"]
+            columns=["reviewnumber", "word_found", "sent_idx", "word_idx", "aspect"]
         )
 
     def loadCSV(self, filename: str = "data_preprocessed.csv") -> None:
@@ -35,10 +39,11 @@ class AspectAnnotator:
             filename (str, optional): String of path to the preprocessed data. Defaults to "data_preprocessed.csv".
         """
         self.data = pd.read_csv(self.path + filename)
-
-        tqdm.pandas(desc="Applying Datatype Transformations...")
+        tqdm.pandas(desc="Loading Tokens..")
         self.data["tokens"] = self.data["tokens"].progress_apply(
-            lambda x: re.sub(r"[\[\]'\s]*", "", x).split(","))
+            lambda x: json.loads(x)
+        )
+
 
     def findAspects(self, rowDf: pd.DataFrame) -> None:
         """
@@ -51,20 +56,23 @@ class AspectAnnotator:
         for aspect in self.keyWords:
             compare = self.keyWords[aspect]
 
-            for i, elem in enumerate(rowDf["tokens"]):
-                for e in compare:
-                    if e in elem.lower():
-                        aspects["reviewnumber"] = rowDf.name
-                        aspects["word_found"] = elem
-                        aspects["word_idx"] = i
-                        aspects["aspect"] = aspect
-                        self.df = self.df.append(aspects, ignore_index=True)
+            for i, sent in enumerate(rowDf["tokens"]):
+                for j, word in enumerate(sent):
+                    for e in compare:
+                        if e in word.lower():
+                            aspects["reviewnumber"] = rowDf.name
+                            aspects["word_found"] = word
+                            aspects["sent_idx"] = i
+                            aspects["word_idx"] = j
+                            aspects["aspect"] = aspect
+                            self.df = self.df.append(aspects, ignore_index=True)
 
     def annotate(self) -> None:
         """
         function to call the "findAspects()" function for every row
         """
-        self.data.apply(lambda x: self.findAspects(x), axis=1)
+        tqdm.pandas(desc="Finding Aspects!")
+        self.data.progress_apply(lambda x: self.findAspects(x), axis=1)
 
     def saveCSV(self, filename: str = "data_aspects_tokens.csv") -> None:
         """

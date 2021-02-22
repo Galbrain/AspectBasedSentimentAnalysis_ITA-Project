@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
 import glob
 import json
-import re
-from datetime import date
-from unittest.main import main
 
 import pandas as pd
 import spacy
+from nltk.tokenize import sent_tokenize, word_tokenize
+from tqdm import tqdm
 
 
 class Preprocessor:
@@ -41,7 +40,6 @@ class Preprocessor:
         self.lower = lower
         self.rmnonalphanumeric = rmnonalphanumeric
         self.substituespecial = substituespecial
-        self.lemmatize = lemmatize
         self.rmstopwords = rmstopwords
         self.rmdefault = rmdefault
         self.stopwords = None
@@ -69,13 +67,17 @@ class Preprocessor:
         Args:
             filename (str, optional): Defaults to "data_preprocessed.csv".
         """
+        tqdm.pandas(desc="JSON dumping tokens..")
+        self.data["tokens"] = self.data["tokens"].progress_apply(
+            lambda x: json.dumps(x)
+        )
         self.data.to_csv(self.path + filename, index=False)
 
-    def splitSentences(self) -> bool:
-        # TODO: think about this one
-
-        self.data["review_text_raw"].str.split(r"")
-        return True
+    def splitSentences(self) -> None:
+        tqdm.pandas(desc="Splitting Sentences")
+        self.data["tokens"] = self.data[self.normalizeColumn].progress_apply(
+            lambda x: sent_tokenize(x, language="german")
+        )
 
     def removeCapitalization(self) -> bool:
         """
@@ -96,7 +98,7 @@ class Preprocessor:
         """
 
         self.data[self.normalizeColumn] = self.data[self.normalizeColumn].str.replace(
-            r"[^\w\s]", " "
+            r"[^\w\s]", " ", regex=True
         )
 
     def removeString(self, regstring: str) -> bool:
@@ -111,7 +113,7 @@ class Preprocessor:
         """
 
         self.data[self.normalizeColumn] = self.data[self.normalizeColumn].str.replace(
-            regstring, " "
+            regstring, " ", regex=True
         )
 
     def removeDefaultStrings(self) -> bool:
@@ -158,8 +160,11 @@ class Preprocessor:
         Returns:
             bool: Sucessful execution of command
         """
-
-        self.data["tokens"] = self.data[self.normalizeColumn].str.split()
+        self.splitSentences()
+        tqdm.pandas(desc="Creating Word Tokens")
+        self.data["tokens"] = self.data["tokens"].progress_apply(
+            lambda x: [word_tokenize(i, language="german") for i in x]
+        )
 
     def loadSpacyModel(
         self,
@@ -227,23 +232,6 @@ class Preprocessor:
             ]
         )
 
-    def lemmatizeTokens(self) -> bool:
-        """
-        produces a lemmatized version of the tokenized series it was given
-
-        Returns:
-            bool: Sucessful execution of command
-        """
-        if not self.nlp:
-            if not self.loadSpacyModel():
-                return False
-                print("Skipping. Unable to load Spacy Model")
-
-        self.data["tokens"] = self.data["tokens"].apply(
-            lambda x: [word.lemma_ for word in self.nlp(" ".join(x))]
-        )
-        return True
-
     def prep(self) -> bool:
         """
         prepares the data with the configuations given at initialization
@@ -271,8 +259,5 @@ class Preprocessor:
             self.removeStopwords()
         else:
             self.tokenize()
-
-        if self.lemmatize:
-            self.lemmatizeTokens()
 
         return True

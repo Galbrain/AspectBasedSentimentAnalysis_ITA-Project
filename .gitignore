@@ -29,5 +29,6 @@ src/data/*
 !src/data/.gitkeep
 !src/data/raw/.gitkeep
 !src/data/pictures/*.png
+!src/data/aspectDict.json
 htmlcov/*local*.html
 geckodriver.log

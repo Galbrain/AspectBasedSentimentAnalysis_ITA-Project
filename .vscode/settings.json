@@ -1,7 +1,7 @@
 {
     "telemetry.enableTelemetry": false,
     "telemetry.enableCrashReporter": false,
-    "editor.minimap.enabled": false,
+    "editor.minimap.enabled": true,
     "editor.formatOnPaste": true,
     "editor.formatOnSave": true,
     "editor.formatOnType": true,
@@ -44,5 +44,5 @@
     },
     "autoDocstring.docstringFormat": "google",
     "autoDocstring.startOnNewLine": true,
-    "python.analysis.completeFunctionParens": true
+    "python.analysis.completeFunctionParens": true,
 }

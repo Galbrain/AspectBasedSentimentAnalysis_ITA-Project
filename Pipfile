@@ -9,9 +9,11 @@ beautifulsoup4 = "*"
 requests = "*"
 matplotlib = "*"
 pandas = "*"
-spacy = "*"
-wordcloud = "*"
 pre-commit = "*"
+numpy = "*"
+tqdm = "*"
+nltk = "*"
+spacy = "*"
 
 [dev-packages]
 flake8 = "*"
