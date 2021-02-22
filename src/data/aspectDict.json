@@ -1,0 +1,28 @@
+{
+    "Grafik": [
+        "grafik",
+        "optik",
+        "grafikeffekte"
+    ],
+    "Sound": [
+        "sound",
+        "klang",
+        "akkustik",
+        "ton",
+        "soundtrack",
+        "soundeffekte",
+        "soundkulisse",
+        "musik"
+    ],
+    "Steuerung": [
+        "steuerung",
+        "controls",
+        "bedienung"
+    ],
+    "Atmosphäre": [
+        "atmosphäre",
+        "stimmung",
+        "ambiente",
+        "lichtstimmung"
+    ]
+}

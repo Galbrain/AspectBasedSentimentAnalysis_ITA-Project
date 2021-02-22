@@ -9,10 +9,21 @@ beautifulsoup4 = "*"
 requests = "*"
 matplotlib = "*"
 pandas = "*"
+pre-commit = "*"
+numpy = "*"
+tqdm = "*"
+nltk = "*"
 spacy = "*"
-wordcloud = "*"
 
 [dev-packages]
+flake8 = "*"
+autopep8 = "*"
+coverage = "*"
+
+[scripts]
+test = "coverage run --include=src/*,tests/* --omit=*/__init__.py -m unittest discover -s ./tests -p *_test.py"
+report = "coverage html"
+main = "python ./src/main.py"
 
 [requires]
 python_version = "3.9"

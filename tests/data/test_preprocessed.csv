@@ -1,0 +1,4 @@
+title,review_text_raw,Grafik,Sound,Steuerung,Atmosphäre,text_normalized,tokens
+testgame,Das ist für eine schöne Testdatei!,4.0,5.0,5.0,5.0,das ist für eine schöne testdatei ,"[[""sch\u00f6ne"", ""testdatei""]]"
+testgame,Die Grafik ist sehr schön.,4.0,5.0,5.0,5.0,die grafik ist sehr schön ,"[[""grafik"", ""sch\u00f6n""]]"
+testgame2,richt/ig [k]acke!,1.0,1.0,1.0,1.0,richt ig  k acke ,"[[""richt"", ""ig"", ""k"", ""acke""]]"

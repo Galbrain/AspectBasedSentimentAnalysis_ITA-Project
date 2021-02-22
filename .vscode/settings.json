@@ -1,7 +1,7 @@
 {
     "telemetry.enableTelemetry": false,
     "telemetry.enableCrashReporter": false,
-    "editor.minimap.enabled": false,
+    "editor.minimap.enabled": true,
     "editor.formatOnPaste": true,
     "editor.formatOnSave": true,
     "editor.formatOnType": true,
@@ -11,10 +11,6 @@
         "**/__pycache__": true,
         "LICENSE": true,
         ".coverage": true
-    },
-    "[markdown]": {
-        "editor.formatOnSave": true,
-        "editor.defaultFormatter": "shd101wyy.markdown-preview-enhanced"
     },
     "python.autoComplete.addBrackets": true,
     "python.formatting.provider": "autopep8",
@@ -38,12 +34,15 @@
         "-s",
         "./tests",
         "-p",
-        "test*.py"
+        "*_test.py"
     ],
     "python.envFile": "${workspaceFolder}/.env",
     "[python]": {
         "editor.codeActionsOnSave": {
             "source.organizeImports": true
         }
-    }
+    },
+    "autoDocstring.docstringFormat": "google",
+    "autoDocstring.startOnNewLine": true,
+    "python.analysis.completeFunctionParens": true,
 }
