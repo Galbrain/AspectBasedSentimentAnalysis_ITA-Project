@@ -219,6 +219,7 @@ class SentimentDetector:
                 return -1
             else:
                 return 1
+
         else:
             for i, qualifier in enumerate(lexEntry["qualifier"].values):
                 # TODO currently the first qualifier found is taken, without considering which the most fitting one is
