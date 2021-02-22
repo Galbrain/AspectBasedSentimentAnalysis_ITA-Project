@@ -116,6 +116,7 @@ class SentimentDetector:
                     subset=["word", "qualifier"], inplace=True
                 )
                 self.df_lexicon.set_index("word", inplace=True)
+                self.df_lexicon.drop("%%")
 
             return True
         except IOError as e:
@@ -146,6 +147,61 @@ class SentimentDetector:
                 return False
             self.nlp = spacy.load(model, disable=disableList)
             return True
+
+    def checkPolarityAdjective(self, child):
+        lemma = self.lemmatizer.find_lemma(child.text, child.pos_)
+        lexEntry = self.df_lexicon.loc[lemma]
+        # TODO maybe do error handling when no entry in lexicon is found
+        pol_strength = lexEntry["polarity_strength"]
+        if type(lexEntry["qualifier"]) == str and lexEntry["polarity"] == 'NEG':
+            pol_strength *= -1
+        # TODO not sure if 'any()' actually works here as intended (maybe something like: .any(lambda x: [x["polarity"] == 'NEG']))
+        if type(lexEntry["qualifier"]) != str and lexEntry["polarity"].any() == 'NEG':
+            pol_strength *= -1
+        return pol_strength
+
+    def checkForIntensifier(self, child):
+        """
+        For a given word_doc (child) check if any of the children is an intensifier and if so, return their polarity_strength
+
+        Args:
+            child (word_doc): tokenized word with tagged 'pos_' and 'text'
+
+        Returns:
+            polarity_strength (float): polarity_strength of found intensifier words
+        """
+        lemma = self.lemmatizer.find_lemma(child.text, child.pos_)
+        lexEntry = self.df_lexicon.loc[lemma]
+        if type(lexEntry["qualifier"]) == str:
+            # polarity_strength *= lexEntry["polarity_strength"]
+            if lexEntry["qualifier"] == "INT":
+                polarity_multiplier = lexEntry["polarity_strength"]
+            elif lexEntry["qualifier"] == "SHI":
+                polarity_multiplier = -1
+            else:
+                polarity_multiplier = 1
+        else:
+            # TODO something when lexicon has multiple entries
+            pass
+        return polarity_multiplier
+
+    def calcTotalPolarityStrength(self, child) -> float:
+        """
+        Calculate the total polarity for a given word
+
+        Args:
+            child (word_doc): the tokenized word with tagged 'pos_' and 'text'
+
+        Returns:
+            polarity_strength (float): the calculated polarity for the given word (child)
+        """
+        # lemma = self.lemmatizer.find_lemma(child.text, child.pos_)
+        polarity_strength = self.checkPolarityAdjective(child)
+
+        # find intensifier in children and multiply their strength to the polarity
+        for c in child.children:
+            polarity_strength *= self.checkForIntensifier(c)
+        return polarity_strength
 
     def detectSentiment(self, rowDF: PD.Series, lemmatizer) -> None:
         text = sent_tokenize(
