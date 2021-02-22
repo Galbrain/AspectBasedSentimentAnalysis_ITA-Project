@@ -1,5 +1,6 @@
 import json
 import os
+from enum import Enum
 
 import nltk
 import numpy as NP
@@ -10,6 +11,11 @@ from germalemma import GermaLemma
 from nltk.tokenize import sent_tokenize
 from spacy import displacy
 from tqdm import tqdm
+
+
+class ChildType(Enum):
+    DESCRIPTOR = 0
+    INTENSIFIER = 1
 
 
 class SentimentDetector:
@@ -82,10 +88,6 @@ class SentimentDetector:
                 self.df_aspect_tokens["sentiment_words"].fillna(
                     {i: [] for i in self.df_aspect_tokens.index}, inplace=True
                 )
-                self.df_aspect_tokens["intensifier_words"] = PD.NaT
-                self.df_aspect_tokens["intensifier_words"].fillna(
-                    {i: [] for i in self.df_aspect_tokens.index}, inplace=True
-                )
 
                 self.df_aspect_tokens["word_found"] = self.df_aspect_tokens[
                     "word_found"
@@ -144,49 +146,93 @@ class SentimentDetector:
             self.nlp = spacy.load(model, disable=disableList)
             return True
 
-    def checkPolarityAdjective(self, child):
-        lemma = self.lemmatizer.find_lemma(child.text, child.pos_)
-        lexEntry = self.df_lexicon.loc[lemma]
-        # TODO maybe do error handling when no entry in lexicon is found
-        pol_strength = lexEntry["polarity_strength"]
-        if type(lexEntry["qualifier"]) == str and lexEntry["polarity"] == 'NEG':
-            pol_strength *= -1
-        # TODO not sure if 'any()' actually works here as intended (maybe something like: .any(lambda x: [x["polarity"] == 'NEG']))
-        if type(lexEntry["qualifier"]) != str and lexEntry["polarity"].any() == 'NEG':
-            pol_strength *= -1
-        return pol_strength
+    def checkValidChild(self, child, childType: ChildType) -> bool:
+        if childType == ChildType.DESCRIPTOR:
+            if ((child.tag_ == "ADJA" and child.pos_ == "ADJ") or (child.pos_ == "ADV")):
+                return True
+            return False
+        elif childType == ChildType.INTENSIFIER:
+            if child.pos_ == "ADJ" or child.pos_ == "ADV":
+                return True
+            return False
+        else:
+            print("Wrong childType.")
+            return False
 
-    def checkForIntensifier(self, child):
+    def checkPolarityAdjective(self, child) -> float:
         """
-        For a given word_doc (child) check if any of the children is an intensifier and if so, return their polarity_strength
+        check if the given word has an entry in the sentiment lexicon and return given polarity strength
 
         Args:
-            child (word_doc): tokenized word with tagged 'pos_' and 'text'
+            child (spacy.Token): tokenized word with tagged 'pos_' and 'text'
 
         Returns:
-            polarity_strength (float): polarity_strength of found intensifier words
+            pol_strength (float): polarity_strength of given word found in sentiment lexicon
+        """
+        lemma = self.lemmatizer.find_lemma(
+            child.text.replace(r"[^\w]*", ""), child.pos_)
+
+        # catch words that are not in the sentiment lexicon
+        try:
+            lexEntry = self.df_lexicon.loc[lemma]
+        except KeyError:
+            # print('Word not found in Sentiment Lexicon:', lemma)
+            return 0
+
+        if type(lexEntry["qualifier"]) == str:
+            pol_strength = lexEntry["polarity_strength"]
+            if lexEntry["qualifier"] == 'NEG':
+                return -pol_strength
+            return pol_strength
+        else:
+            for i, qualifier in enumerate(lexEntry['qualifier'].values):
+                if qualifier == 'POS':
+                    return lexEntry['polarity_strength'][i]
+                if qualifier == 'NEG':
+                    return -lexEntry['polarity_strength'][i]
+            return pol_strength
+
+    def checkForIntensifier(self, child) -> float:
+        """
+        For a given spacy.Token (child) check if any of the children is an intensifier and if so, return their polarity_strength
+
+        Args:
+            child (spacy.Token): tokenized word with tagged 'pos_' and 'text'
+
+        Returns:
+            polarity_multiplier (float): polarity_multiplier of found intensifier word
         """
         lemma = self.lemmatizer.find_lemma(child.text, child.pos_)
-        lexEntry = self.df_lexicon.loc[lemma]
+
+        try:
+            lexEntry = self.df_lexicon.loc[lemma]
+            # print('Valid lemma in intensifier', lemma)
+        except KeyError:
+            # print("Intensifier not in lexicon", lemma)
+            return 1
+
         if type(lexEntry["qualifier"]) == str:
-            # polarity_strength *= lexEntry["polarity_strength"]
             if lexEntry["qualifier"] == "INT":
-                polarity_multiplier = lexEntry["polarity_strength"]
+                return lexEntry["polarity_strength"]
             elif lexEntry["qualifier"] == "SHI":
-                polarity_multiplier = -1
+                return -1
             else:
-                polarity_multiplier = 1
+                return 1
         else:
-            # TODO something when lexicon has multiple entries
-            pass
-        return polarity_multiplier
+            for i, qualifier in enumerate(lexEntry["qualifier"].values):
+                # TODO currently the first qualifier found is taken, without considering which the most fitting one is
+                if qualifier == "INT":
+                    return lexEntry["polarity_strength"][i]
+                elif qualifier == "SHI":
+                    return -1
+            return 1
 
     def calcTotalPolarityStrength(self, child) -> float:
         """
         Calculate the total polarity for a given word
 
         Args:
-            child (word_doc): the tokenized word with tagged 'pos_' and 'text'
+            child (spacy.Token): the tokenized word with tagged 'pos_' and 'text'
 
         Returns:
             polarity_strength (float): the calculated polarity for the given word (child)
@@ -196,13 +242,10 @@ class SentimentDetector:
 
         # find intensifier in children and multiply their strength to the polarity
         for c in child.children:
-            polarity_strength *= self.checkForIntensifier(c)
+            if (self.checkValidChild(c, ChildType.INTENSIFIER)):
+                polarity_strength *= self.checkForIntensifier(c)
         return polarity_strength
 
-    def detectSentiment(self, rowDF: PD.Series, lemmatizer) -> None:
-        text = sent_tokenize(
-            self.df_preprocessed.iloc[rowDF["reviewnumber"]]["text_normalized"],
-            language="german",
     def detectSentiment(self, rowDF: PD.Series) -> None:
         doc = self.nlp(
             " ".join(
@@ -216,211 +259,33 @@ class SentimentDetector:
             if token.text == rowDF["word_found"]:
                 for child in token.children:
                     # if child.tag_ == "ADJA":
-                    if child.tag_ == "ADJA" and child.pos_ == "ADJ":
-                        try:
-                            lemma = self.lemmatizer.find_lemma(child.text, child.pos_)
-                            pol_strength = self.df_lexicon.loc[lemma][
-                                "polarity_strength"
-                            ]
-                            if (
-                                type(self.df_lexicon.loc[lemma]["qualifier"]) == str
-                                and self.df_lexicon.loc[lemma]["qualifier"] == "NEG"
-                            ):
-                                pol_strength *= -1
-                            if (
-                                type(self.df_lexicon.loc[lemma]["qualifier"]) != str
-                                and self.df_lexicon.loc[lemma]["polarity"].any()
-                                == "NEG"
-                            ):
-                                pol_strength *= -1
+                    if self.checkValidChild(child, ChildType.DESCRIPTOR):
+                        pol_strength = self.calcTotalPolarityStrength(child)
 
-                            for c in child.children:
-                                lec = self.df_lexicon.loc[c.text]
+                        self.df_aspect_tokens["polarity_strength"][
+                            rowDF.name
+                        ].append(pol_strength)
 
-                                if type(lec["qualifier"]) == str:
-                                    if lec["qualifier"] == "INT":
-                                        pol_strength *= lec["polarity_strength"]
-                                        self.df_aspect_tokens["intensifier_words"][
-                                            rowDF.name
-                                        ].append(c.text)
-                                    elif (
-                                        lec["qualifier"] == "SHI"
-                                        and lec["pos"] == "neg"
-                                    ):
-                                        pol_strength *= -1
-                                        self.df_aspect_tokens["intensifier_words"][
-                                            rowDF.name
-                                        ].append(c.text)
-                                    else:
-                                        pass
-                                else:
-                                    for i, elem in enumerate(lec["qualifier"].values):
-                                        if elem == "INT":
-                                            pol_strength *= lec["polarity_strength"][i]
-                                            self.df_aspect_tokens["intensifier_words"][
-                                                rowDF.name
-                                            ].append(c.text)
-                                        elif elem == "SHI" and lec["pos"][i] == "neg":
-                                            pol_strength *= -1
-                                            self.df_aspect_tokens["intensifier_words"][
-                                                rowDF.name
-                                            ].append(c.text)
-
-                            self.df_aspect_tokens["polarity_strength"][
-                                rowDF.name
-                            ].append(pol_strength)
-
-                            self.df_aspect_tokens["sentiment_words"][rowDF.name].append(
-                                child.text
-                            )
-                            return
-
-                        except KeyError:
-                            pass
+                        self.df_aspect_tokens["sentiment_words"][rowDF.name].append(
+                            child.text
+                        )
+                        return
 
                 for token in doc[j].ancestors:
-                    if token.pos_ == "AUX":
+                    if token.pos_ == "AUX" or token.pos_ == "VERB":
                         for child in token.children:
-                            if child.pos_ == "ADJ" or child.pos_ == "ADV":
-                                try:
-                                    lemma = self.lemmatizer.find_lemma(
-                                        child.text, child.pos_
-                                    )
-                                    pol_strength = self.df_lexicon.loc[lemma][
-                                        "polarity_strength"
-                                    ]
-                                    if (
-                                        type(self.df_lexicon.loc[lemma]["qualifier"])
-                                        == str
-                                        and self.df_lexicon.loc[lemma]["qualifier"]
-                                        == "NEG"
-                                    ):
-                                        pol_strength *= -1
-                                    if (
-                                        type(self.df_lexicon.loc[lemma]["qualifier"])
-                                        != str
-                                        and self.df_lexicon.loc[lemma]["polarity"].any()
-                                        == "NEG"
-                                    ):
-                                        pol_strength *= -1
+                            if self.checkValidChild(child, ChildType.DESCRIPTOR):
+                                pol_strength = self.calcTotalPolarityStrength(child)
 
-                                    for c in child.children:
-                                        lec = self.df_lexicon.loc[c.text]
+                                self.df_aspect_tokens["polarity_strength"][
+                                    rowDF.name
+                                ].append(pol_strength)
 
-                                        if type(lec["qualifier"]) == str:
-                                            if lec["qualifier"] == "INT":
-                                                pol_strength *= lec["polarity_strength"]
-                                                self.df_aspect_tokens[
-                                                    "intensifier_words"
-                                                ][rowDF.name].append(c.text)
-                                            elif (
-                                                lec["qualifier"] == "SHI"
-                                                and lec["pos"] == "neg"
-                                            ):
-                                                pol_strength *= -1
-                                                self.df_aspect_tokens[
-                                                    "intensifier_words"
-                                                ][rowDF.name].append(c.text)
-                                            else:
-                                                pass
-                                        else:
-                                            for i, elem in enumerate(
-                                                lec["qualifier"].values
-                                            ):
-                                                if elem == "INT":
-                                                    pol_strength *= lec[
-                                                        "polarity_strength"
-                                                    ][i]
-                                                    self.df_aspect_tokens[
-                                                        "intensifier_words"
-                                                    ][rowDF.name].append(c.text)
-                                                elif (
-                                                    elem == "SHI"
-                                                    and lec["pos"][i] == "neg"
-                                                ):
-                                                    pol_strength *= -1
-                                                    self.df_aspect_tokens[
-                                                        "intensifier_words"
-                                                    ][rowDF.name].append(c.text)
+                                self.df_aspect_tokens["sentiment_words"][
+                                    rowDF.name].append(
+                                    child.text)
 
-                                    self.df_aspect_tokens["polarity_strength"][
-                                        rowDF.name
-                                    ].append(pol_strength)
-
-                                    self.df_aspect_tokens["sentiment_words"][
-                                        rowDF.name
-                                    ].append(child.text)
-
-                                    return
-
-                                except KeyError:
-                                    pass
-                            # """
-                            # take row of DF and extract review number, uses this review number to create a list of tokens that is [-windowsize:+windowsize].
-                            # then check for every word in that window if it is a key in the sentiment lexicon, if yes save the qualifier in the aspect_token dataset
-
-                            # Args:
-                            #     rowDF (PD.Series): row of Dataframe
-                            # """
-                            # window = self.df_preprocessed.iloc[rowDF["reviewnumber"]]["tokens"][
-                            #     rowDF["word_idx"] - self.windowSize: rowDF["word_idx"] + self.windowSize
-                            # ]
-
-                            # for i, word in enumerate(window):
-                            #     try:
-                            #         if (
-                            #             type(self.df_lexicon.loc[word]["qualifier"]) == str
-                            #             and self.df_lexicon.loc[word]["pos"] in ["adj", "neg"]
-                            #         ):
-                            #             self.df_aspect_tokens["qualifier"][rowDF.name].append(
-                            #                 self.df_lexicon.loc[word]["qualifier"]
-                            #             )
-
-                            #             self.df_aspect_tokens["polarity_strength"][rowDF.name].append(
-                            #                 self.df_lexicon.loc[word]["polarity_strength"]
-                            #             )
-
-                            #             self.df_aspect_tokens["sentiment_words"][
-                            #                 rowDF.name].append(word)
-
-                            #         else:
-                            #             pass
-                            #         # elif self.df_lexicon.loc[word]["pos"] in ["adj", "neg"] and self.df_lexicon.loc[window[i]]["qualifier"].any() in ["POS", "NEG"]:
-                            #     lexicon_row = self.df_lexicon.loc[word]
-                            #     print(lexicon_row.values)
-                            #     lexicon_row.drop(
-                            #         lexicon_row
-                            #         [lexicon_row["qualifier"] in ["POS", "NEG"]],
-                            #         inplace=True)
-                            #     self.df_aspect_tokens["qualifier"][rowDF.name].append(
-                            #     )
-                            #     print(lexicon_row)
-
-                            #     self.df_aspect_tokens["polarity_strength"][rowDF.name].append(
-                            #         self.df_lexicon.loc[word]["polarity_strength"]
-                            #     )
-
-                            #     self.df_aspect_tokens["sentiment_words"][
-                            #         rowDF.name].append(word)
-                            # this should be removed since there should be no dupliate entries in the sentiment lexicon
-
-                            # self.df_aspect_tokens["qualifier"][rowDF.name] = "|".join(
-                            #     self.df_lexicon.loc[word]["qualifier"].values
-                            # )
-                            # self.df_aspect_tokens["polarity_strength"][rowDF.name] = "|".join(
-                            #     self.df_lexicon.loc[word]["polarity_strength"].astype(str))
-                            # except KeyError:
-                            #     pass
-
-    def createLookupWindow(self) -> None:
-        """
-        function to vectorize detectSentiment()
-        """
-        if not self.loadSpacyModel():
-            return
-
-        tqdm.pandas(desc="Looking up Sentiments in windows")
-        self.df_aspect_tokens.progress_apply(lambda x: self.detectSentiment(x), axis=1)
+                                return
 
     def convert_polarity(self, qualifier, polarity):
         sentiment_polarity = []
@@ -474,7 +339,11 @@ class SentimentDetector:
 
         nltk.download("punkt", download_dir=".venv")
 
-        self.createLookupWindow()
+        if not self.loadSpacyModel():
+            return
+
+        tqdm.pandas(desc="Looking up Sentiments...")
+        self.df_aspect_tokens.progress_apply(lambda x: self.detectSentiment(x), axis=1)
 
     def saveCSV(self, filename: str = "data_aspects_tokens.csv"):
         self.df_aspect_tokens.to_csv(self.path + filename, index=False)

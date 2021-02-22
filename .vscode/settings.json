@@ -1,7 +1,7 @@
 {
     "telemetry.enableTelemetry": false,
     "telemetry.enableCrashReporter": false,
-    "editor.minimap.enabled": false,
+    "editor.minimap.enabled": true,
     "editor.formatOnPaste": true,
     "editor.formatOnSave": true,
     "editor.formatOnType": true,
@@ -44,5 +44,6 @@
     },
     "autoDocstring.docstringFormat": "google",
     "autoDocstring.startOnNewLine": true,
-    "python.analysis.completeFunctionParens": true
+    "python.analysis.completeFunctionParens": true,
+    "python.pythonPath": "C:\\Users\\kdani\\.virtualenvs\\AspectBasedSentimentAnalysis_ITA-Project-zB4KaOs4\\Scripts\\python.exe"
 }
