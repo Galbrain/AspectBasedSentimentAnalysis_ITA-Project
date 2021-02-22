@@ -44,7 +44,6 @@ class AspectAnnotator:
             lambda x: json.loads(x)
         )
 
-
     def findAspects(self, rowDf: pd.DataFrame) -> None:
         """
         function to be vectorized for the dataset

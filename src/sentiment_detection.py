@@ -2,13 +2,11 @@ import json
 import os
 from enum import Enum
 
-import nltk
 import numpy as NP
 import pandas as PD
 import requests
 import spacy
 from germalemma import GermaLemma
-from nltk.tokenize import sent_tokenize
 from spacy import displacy
 from tqdm import tqdm
 
@@ -338,8 +336,6 @@ class SentimentDetector:
         if not self.loadCSVs():
             print("Couldn't load CSV's.")
             return False
-
-        nltk.download("punkt", download_dir=".venv")
 
         if not self.loadSpacyModel():
             return

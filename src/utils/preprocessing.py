@@ -2,6 +2,7 @@
 import glob
 import json
 
+import nltk
 import pandas as pd
 import spacy
 from nltk.tokenize import sent_tokenize, word_tokenize
@@ -47,6 +48,9 @@ class Preprocessor:
         self.nlp = None
         self.normalizeColumn = "text_normalized"
         self.data = None
+
+        nltk.data.path.append(".venv/")
+        nltk.download("punkt", download_dir=".venv/")
 
     def loadCSV(self, filename: str = "data_raw.csv"):
         """
@@ -225,10 +229,9 @@ class Preprocessor:
             }
 
         self.data["tokens"] = self.data["tokens"].apply(
-            lambda x: [
-                word
-                for word in x
-                if (word.lower() not in self.stopwords and word != "")
+            lambda s: [
+                [word for word in sentence if word not in self.stopwords and word != ""]
+                for sentence in s
             ]
         )
 

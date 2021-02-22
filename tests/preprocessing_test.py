@@ -26,7 +26,7 @@ class PreprocessingTest(unittest.TestCase):
         tmpprep.loadCSV("test.csv")
         tmpprep.prep()
         self.assertTrue(
-            ["das", "ist", "für", "eine", "schöne", "testdatei"]
+            [["das", "ist", "für", "eine", "schöne", "testdatei"]]
             == tmpprep.data["tokens"].tolist()[0]
         )
 

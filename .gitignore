@@ -7,6 +7,7 @@
 
 # virtualenv files
 .venv/
+!.venv/.gitkeep
 
 # Python specific
 # Byte-compiled / optimized / DLL files
