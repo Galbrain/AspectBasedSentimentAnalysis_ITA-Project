@@ -339,7 +339,7 @@ class SentimentDetector:
             print("Couldn't load CSV's.")
             return False
 
-        nltk.download("punkt", download_dir=".venv")
+        nltk.download("punkt")
 
         if not self.loadSpacyModel():
             return
