@@ -15,7 +15,7 @@ class AnnotatorTest(unittest.TestCase):
         self.assertTrue((os.path.isdir(self.annotator.path)))
 
     def testLoadCSV(self):
-        self.assertTrue(["schöne", "testdatei"] == self.annotator.data["tokens"][0])
+        self.assertTrue([["schöne", "testdatei"]] == self.annotator.data["tokens"][0])
 
     def testAnnotate(self):
         self.annotator.annotate()

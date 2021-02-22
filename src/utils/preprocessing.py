@@ -225,10 +225,9 @@ class Preprocessor:
             }
 
         self.data["tokens"] = self.data["tokens"].apply(
-            lambda x: [
-                word
-                for word in x
-                if (word.lower() not in self.stopwords and word != "")
+            lambda s: [
+                [word for word in sentence if word not in self.stopwords and word != ""]
+                for sentence in s
             ]
         )
 
