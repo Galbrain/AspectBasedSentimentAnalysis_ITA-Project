@@ -13,14 +13,14 @@ Every module or package it relies on has to be imported at the beginning.
 The code that is actually executed is the one below 'if __name__ ...' (if run
 as script).
 """
-do_scraping = False
-do_processing = False
-do_annotation = False
+do_scraping = True
+do_processing = True
+do_annotation = True
 do_sentimentanalysis = True
 
 Scraper = None
 Preper = None
-Anotator = None
+Annotator = None
 Detector = None
 
 
@@ -40,14 +40,12 @@ if __name__ == "__main__":
         Preper.saveCSV()
 
     if not os.path.exists("src/data/data_aspects_tokens.csv") or do_annotation:
-        Anotator = AspectAnnotator()
-        Anotator.loadCSV()
-        Anotator.annotate()
-        Anotator.saveCSV()
+        Annotator = AspectAnnotator()
+        Annotator.loadCSV()
+        Annotator.annotate()
+        Annotator.saveCSV()
 
     if do_sentimentanalysis:
         Detector = SentimentDetector()
-        if Preper:
-            Detector.df_preprocessed = Preper.data
         Detector.run()
         Detector.saveCSV()
