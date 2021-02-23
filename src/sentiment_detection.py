@@ -71,7 +71,7 @@ class SentimentDetector:
             lexiconFilename (str, optional): Defaults to "sentiment_lexicon.csv".
 
         Returns:
-            bool: sucessful execution
+            bool: successful execution
         """
         try:
             if self.df_aspect_tokens is None or self.df_aspect_tokens.empty:
@@ -101,7 +101,6 @@ class SentimentDetector:
                 self.df_preprocessed["tokens"] = self.df_preprocessed[
                     "tokens"
                 ].progress_apply(lambda x: json.loads(x))
-                print(self.df_preprocessed)
 
             if self.df_lexicon is None or self.df_lexicon.empty:
                 if not os.path.exists(self.path + lexiconFilename):
@@ -146,7 +145,7 @@ class SentimentDetector:
 
     def checkValidChild(self, child, childType: ChildType) -> bool:
         if childType == ChildType.DESCRIPTOR:
-            if (child.tag_ == "ADJA" and child.pos_ == "ADJ") or (child.pos_ == "ADV"):
+            if (child.tag_ == "ADJA" and child.pos_ == "ADJ") or (child.pos_ == "ADV" and child.tag_ == "ADJD"):
                 return True
             return False
         elif childType == ChildType.INTENSIFIER:
@@ -175,7 +174,8 @@ class SentimentDetector:
         try:
             lexEntry = self.df_lexicon.loc[lemma]
         except KeyError:
-            # print('Word not found in Sentiment Lexicon:', lemma)
+            print('Word not found in Sentiment Lexicon:',
+                  lemma, child.text, child.pos_, child.tag_)
             return 0
 
         if type(lexEntry["qualifier"]) == str:
@@ -189,7 +189,7 @@ class SentimentDetector:
                     return lexEntry["polarity_strength"][i]
                 if qualifier == "NEG":
                     return -lexEntry["polarity_strength"][i]
-            return 0
+            return 1
 
     def checkForIntensifier(self, child) -> float:
         """
@@ -247,6 +247,12 @@ class SentimentDetector:
         return polarity_strength
 
     def detectSentiment(self, rowDF: PD.Series) -> None:
+        """
+        Function to start the other relevent functions
+
+        Args:
+            rowDF (PD.Series): row of the Dataframe
+        """
         doc = self.nlp(
             " ".join(
                 self.df_preprocessed.iloc[rowDF["reviewnumber"]]["tokens"][
@@ -352,7 +358,7 @@ if __name__ == "__main__":
     detector.run()
     detector.saveCSV()
     # detector.loadCSVs()
-    # print(detector.df_preprocessed.iloc[14]["text_normalized"])
+    print(detector.df_preprocessed.iloc[30]["text_normalized"])
 
     # print(detector.returnSentimentsforReviews())
     # detector.overall_sentiment.to_csv("src/data/review_sentiments.csv", index=False)
