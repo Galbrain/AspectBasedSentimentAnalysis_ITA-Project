@@ -26,3 +26,22 @@ for elem_x, elem_y in zip(x, y):
 
 x_train, x_test, y_train, y_test = train_test_split(
     prep_x, prep_y, test_size=0.25, random_state=42)
+
+print('used ', str((len(prep_x)/len(x))*100) + '%', 'of all sentences')
+
+naive_bayes = GaussianNB()
+naive_bayes.fit(x_train, y_train)
+lg = LogisticRegression()
+lg.fit(x_train, y_train)
+
+y_pred = naive_bayes.predict(x_test)
+accuracy = accuracy_score(y_test, y_pred)
+print(accuracy)
+fig, ax = plt.subplots()
+cm = confusion_matrix(y_test, y_pred)
+conf = confusion_matrix(y_test, y_pred).ravel()
+cm = conf.reshape(6, 6)
+sns.heatmap(cm, annot=True, fmt="d", cmap="Spectral")
+ax.set_xlabel('predicted label')
+ax.set_ylabel('true label')
+fig.savefig('test_nb')
