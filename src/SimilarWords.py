@@ -1,11 +1,12 @@
+import itertools
 import os
 import re
 
-import gensim.models.keyedvectors as word2vec
 import pandas as pd
 import spacy
 from gensim.models import KeyedVectors, Word2Vec
 from tqdm import tqdm
+from utils.preprocessing import Preprocessor
 
 
 def train_w2v(reviews):
@@ -23,33 +24,25 @@ def train_w2v(reviews):
     return w2v
 
 
-def normalize_text(reviews_raw_series):
-    # TO DO: use preprocessor
-    def normalize(quote):
-        quote = quote.lower()
-        quote = re.sub(r'[^a-z0-9 ]', '', quote)
-        return quote
+def normalize_text():
 
-    nlp = spacy.load("de_core_news_lg", disable=["tagger", "parser", "ner"])
-    stopwords = spacy.lang.de.stop_words.STOP_WORDS
-
-    tqdm.pandas(desc="Normalizing Text....")
-    normalized_text = reviews_raw_series.progress_apply(normalize)
-    tqdm.pandas(desc="Tokenizing Text....")
-    normalized_text = normalized_text.progress_apply(
-        lambda x: [token.text for token in nlp(x) if token not in stopwords])
-    tokens = normalized_text.tolist()
+    preprocessor = Preprocessor()
+    preprocessor.loadCSV()
+    preprocessor.prep()
+    tokens = preprocessor.data['tokens'].tolist()
+    tokens = list(itertools.chain(*tokens))
+    tokens = list(itertools.chain(*tokens))
     return tokens
 
 
-def get_most_similar(aspect, reviews_raw_series=None):
+def get_most_similar(aspect):
 
     w2v = None
     if 'w2v_model.bin' in os.listdir('src/data'):
         w2v = KeyedVectors.load_word2vec_format(
             "src/data/w2v_model.bin", binary=True, unicode_errors='ignore')
     else:
-        reviews = normalize_text(reviews_raw_series)
+        reviews = normalize_text()
         w2v = train_w2v(reviews)
 
     try:
