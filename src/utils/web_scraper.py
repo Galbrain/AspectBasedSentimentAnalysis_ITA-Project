@@ -32,7 +32,7 @@ class WebScraper:
                 "review_text_raw": i["content"]
                 .replace("<br />", "")
                 .replace("&quot;", "")
-                .replace("\n", ""),
+                .replace("\n", " "),
                 "Grafik": i["ratingDetail"]["score_graphics"],
                 "Sound": i["ratingDetail"]["score_sound"],
                 "Steuerung": i["ratingDetail"]["score_gameplay"],
