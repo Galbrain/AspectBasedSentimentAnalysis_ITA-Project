@@ -1,11 +1,8 @@
 import itertools
 import os
-import re
 
 import pandas as pd
-import spacy
 from gensim.models import KeyedVectors, Word2Vec
-from tqdm import tqdm
 from utils.preprocessing import Preprocessor
 
 
