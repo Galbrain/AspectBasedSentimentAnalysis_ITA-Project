@@ -4,7 +4,7 @@ import re
 import gensim.models.keyedvectors as word2vec
 import pandas as pd
 import spacy
-from gensim.models import Word2Vec
+from gensim.models import KeyedVectors, Word2Vec
 from tqdm import tqdm
 
 
@@ -46,8 +46,8 @@ def get_most_similar(aspect, reviews_raw_series=None):
 
     w2v = None
     if 'w2v_model.bin' in os.listdir('src/data'):
-        w2v = word2vec.KeyedVectors.load_word2vec_format(  # TO DO: doesn't work yet
-            "src/data/w2v_model.bin", binary=True)
+        w2v = KeyedVectors.load_word2vec_format(
+            "src/data/w2v_model.bin", binary=True, unicode_errors='ignore')
     else:
         reviews = normalize_text(reviews_raw_series)
         w2v = train_w2v(reviews)
