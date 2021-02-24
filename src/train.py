@@ -6,6 +6,9 @@ from sklearn.metrics import accuracy_score, confusion_matrix
 from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import GaussianNB
 
+mapping = {0: 'negative', 1: 'negative', 2: 'neutral',
+           3: 'neutral', 4: 'positive', 5: 'positive'}
+
 data = pd.read_csv('src/data/data_aspects_tokens.csv')
 x = data['polarity_strength'].to_list()
 y = data['true_label'].astype(int)
