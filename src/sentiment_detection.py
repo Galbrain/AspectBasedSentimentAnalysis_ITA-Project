@@ -101,7 +101,6 @@ class SentimentDetector:
                 self.df_preprocessed["tokens"] = self.df_preprocessed[
                     "tokens"
                 ].progress_apply(lambda x: json.loads(x))
-                print(self.df_preprocessed)
 
             if self.df_lexicon is None or self.df_lexicon.empty:
                 if not os.path.exists(self.path + lexiconFilename):
@@ -255,10 +254,21 @@ class SentimentDetector:
             )
         )
 
-        for j, token in enumerate(doc):
-            if token.text == rowDF["word_found"]:
+        for child in doc[rowDF["word_idx"]].children:
+            # if child.tag_ == "ADJA":
+            if self.checkValidChild(child, ChildType.DESCRIPTOR):
+                pol_strength = self.calcTotalPolarityStrength(child)
+
+                self.df_aspect_tokens["polarity_strength"][rowDF.name].append(
+                    pol_strength
+                )
+
+                self.df_aspect_tokens["sentiment_words"][rowDF.name].append(child.text)
+                return
+
+        for token in doc[rowDF["word_idx"]].ancestors:
+            if token.pos_ == "AUX" or token.pos_ == "VERB":
                 for child in token.children:
-                    # if child.tag_ == "ADJA":
                     if self.checkValidChild(child, ChildType.DESCRIPTOR):
                         pol_strength = self.calcTotalPolarityStrength(child)
 
@@ -269,23 +279,8 @@ class SentimentDetector:
                         self.df_aspect_tokens["sentiment_words"][rowDF.name].append(
                             child.text
                         )
+
                         return
-
-                for token in doc[j].ancestors:
-                    if token.pos_ == "AUX" or token.pos_ == "VERB":
-                        for child in token.children:
-                            if self.checkValidChild(child, ChildType.DESCRIPTOR):
-                                pol_strength = self.calcTotalPolarityStrength(child)
-
-                                self.df_aspect_tokens["polarity_strength"][
-                                    rowDF.name
-                                ].append(pol_strength)
-
-                                self.df_aspect_tokens["sentiment_words"][
-                                    rowDF.name
-                                ].append(child.text)
-
-                                return
 
     def convert_polarity(self, qualifier, polarity):
         sentiment_polarity = []
