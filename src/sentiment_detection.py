@@ -151,7 +151,9 @@ class SentimentDetector:
 
     def checkValidChild(self, child, childType: ChildType) -> bool:
         if childType == ChildType.DESCRIPTOR:
-            if (child.tag_ == "ADJA" and child.pos_ == "ADJ") or (child.pos_ == "ADV" and child.tag_ == "ADJD"):
+            if (child.tag_ == "ADJA" and child.pos_ == "ADJ") or (
+                child.pos_ == "ADV" and child.tag_ == "ADJD"
+            ):
                 return True
             return False
         elif childType == ChildType.INTENSIFIER:
@@ -254,11 +256,13 @@ class SentimentDetector:
                 # TODO currently the first qualifier found is taken, without considering which the most fitting one is
                 if qualifier == "INT":
                     self.df_aspect_tokens["intensifier_words"][rowIdx].append(
-                        child.text)
+                        child.text
+                    )
                     return lexEntry["polarity_strength"][i]
                 elif qualifier == "SHI":
                     self.df_aspect_tokens["intensifier_words"][rowIdx].append(
-                        child.text)
+                        child.text
+                    )
                     return -1
             return 1
 
@@ -320,7 +324,8 @@ class SentimentDetector:
                         for child in token.children:
                             if self.checkValidChild(child, ChildType.DESCRIPTOR):
                                 pol_strength = self.calcTotalPolarityStrength(
-                                    child, rowDF.name)
+                                    child, rowDF.name
+                                )
 
                                 self.df_aspect_tokens["polarity_strength"][
                                     rowDF.name
