@@ -92,7 +92,7 @@ class SentimentDetector:
                 self.df_aspect_tokens["intensifier_words"].fillna(
                     {i: [] for i in self.df_aspect_tokens.index}, inplace=True
                 )
-                
+
                 self.df_aspect_tokens["word_found"] = self.df_aspect_tokens[
                     "word_found"
                 ].str.replace(r"[^\w]*", "", regex=True)
@@ -166,7 +166,6 @@ class SentimentDetector:
             return False
 
     def checkPolarityAdjective(self, child, rowIdx) -> float:
-
         """
         check if the given word has an entry in the sentiment lexicon and return given polarity strength
 
@@ -284,7 +283,6 @@ class SentimentDetector:
         # lemma = self.lemmatizer.find_lemma(child.text, child.pos_)
         polarity_strength = self.checkPolarityAdjective(child, rowIdx)
 
-
         # find intensifier in children and multiply their strength to the polarity
         for c in child.children:
             if self.checkValidChild(c, ChildType.INTENSIFIER):
@@ -309,7 +307,7 @@ class SentimentDetector:
         for child in doc[rowDF["word_idx"]].children:
             # if child.tag_ == "ADJA":
             if self.checkValidChild(child, ChildType.DESCRIPTOR):
-                pol_strength = self.calcTotalPolarityStrength(child)
+                pol_strength = self.calcTotalPolarityStrength(child, rowDF.name)
 
                 self.df_aspect_tokens["polarity_strength"][rowDF.name].append(
                     pol_strength
@@ -323,7 +321,6 @@ class SentimentDetector:
                 for child in token.children:
                     if self.checkValidChild(child, ChildType.DESCRIPTOR):
                         pol_strength = self.calcTotalPolarityStrength(child, rowDF.name)
-
 
                         self.df_aspect_tokens["polarity_strength"][rowDF.name].append(
                             pol_strength
@@ -402,7 +399,6 @@ if __name__ == "__main__":
 
     print(detector.df_preprocessed.iloc[30]["text_normalized"])
     # print(detector.df_preprocessed.iloc[14]["text_normalized"])
-
 
     # print(detector.returnSentimentsforReviews())
     # detector.overall_sentiment.to_csv("src/data/review_sentiments.csv", index=False)
