@@ -164,10 +164,13 @@ class Preprocessor:
         Returns:
             bool: Sucessful execution of command
         """
+        if not self.loadSpacyModel():
+            return
+
         self.splitSentences()
         tqdm.pandas(desc="Creating Word Tokens")
         self.data["tokens"] = self.data["tokens"].progress_apply(
-            lambda x: [word_tokenize(i, language="german") for i in x]
+            lambda x: [[t.text for t in self.nlp(i)] for i in x]
         )
 
     def loadSpacyModel(
@@ -221,7 +224,7 @@ class Preprocessor:
             return True
 
         if not self.loadStopwords():
-            print("Skipping. Unable to load Stopwords!")
+            print("Skipping. Unable to loady Stopwords!")
 
         if self.substituespecial:
             self.stopwords = {
