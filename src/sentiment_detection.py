@@ -306,10 +306,21 @@ class SentimentDetector:
             )
         )
 
-        for j, token in enumerate(doc):
-            if token.text == rowDF["word_found"]:
+        for child in doc[rowDF["word_idx"]].children:
+            # if child.tag_ == "ADJA":
+            if self.checkValidChild(child, ChildType.DESCRIPTOR):
+                pol_strength = self.calcTotalPolarityStrength(child)
+
+                self.df_aspect_tokens["polarity_strength"][rowDF.name].append(
+                    pol_strength
+                )
+
+                self.df_aspect_tokens["sentiment_words"][rowDF.name].append(child.text)
+                return
+
+        for token in doc[rowDF["word_idx"]].ancestors:
+            if token.pos_ == "AUX" or token.pos_ == "VERB":
                 for child in token.children:
-                    # if child.tag_ == "ADJA":
                     if self.checkValidChild(child, ChildType.DESCRIPTOR):
                         pol_strength = self.calcTotalPolarityStrength(child, rowDF.name)
 
@@ -322,24 +333,6 @@ class SentimentDetector:
                             child.text
                         )
                         return
-
-                for token in doc[j].ancestors:
-                    if token.pos_ == "AUX" or token.pos_ == "VERB":
-                        for child in token.children:
-                            if self.checkValidChild(child, ChildType.DESCRIPTOR):
-                                pol_strength = self.calcTotalPolarityStrength(
-                                    child, rowDF.name
-                                )
-
-                                self.df_aspect_tokens["polarity_strength"][
-                                    rowDF.name
-                                ].append(pol_strength)
-
-                                self.df_aspect_tokens["sentiment_words"][
-                                    rowDF.name
-                                ].append(child.text)
-
-                                return
 
     def convert_polarity(self, qualifier, polarity):
         sentiment_polarity = []
