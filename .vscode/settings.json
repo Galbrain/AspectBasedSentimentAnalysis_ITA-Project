@@ -45,4 +45,9 @@
     "autoDocstring.docstringFormat": "google",
     "autoDocstring.startOnNewLine": true,
     "python.analysis.completeFunctionParens": true,
+    "cSpell.words": [
+        "inplace",
+        "lemmatizer",
+        "tqdm"
+    ],
 }

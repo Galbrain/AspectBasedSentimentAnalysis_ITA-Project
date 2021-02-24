@@ -30,15 +30,5 @@ class PreprocessingTest(unittest.TestCase):
             == tmpprep.data["tokens"].tolist()[0]
         )
 
-    # def testLemmanize(self):
-    #     tmpprep = Preprocessor(self.path, lemmatize=True, rmstopwords=False)
-    #     tmpprep.loadCSV("test.csv")
-    #     tmpprep.prep()
-    #     self.assertTrue(
-    #         ["der", "sein", "für", "einen", "schöne", "testdatei"]
-    #         == tmpprep.data["tokens"].tolist()[0]
-    #     )
-
-
 if __name__ == "__main__":
     unittest.main()
