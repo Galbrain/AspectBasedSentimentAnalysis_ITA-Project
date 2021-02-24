@@ -39,7 +39,7 @@ class AspectAnnotator:
         Args:
             filename (str, optional): String of path to the preprocessed data. Defaults to "data_preprocessed.csv".
         """
-        self.data = pd.read_csv(self.path + filename, lineterminator="\n")
+        self.data = pd.read_csv(self.path + filename)
         tqdm.pandas(desc="Loading Tokens..")
         self.data["tokens"] = self.data["tokens"].progress_apply(
             lambda x: json.loads(x)
