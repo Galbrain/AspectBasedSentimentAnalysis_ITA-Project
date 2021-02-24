@@ -17,7 +17,9 @@ Now to get all needed dependecies run the command:
 
 ```python -m pipenv run main```
 
-Now the code should be executing, progress bars will indicate the current steps of the pipline.
+Now the code should be executing, missing packages such as Spacy models, nltk sentence tokenizer and the sentiment lexicon 
+will be downloaded as part of the code. (spacy models are "de_core_news_lg", "de_core_news_sm") (the sentitment lexicon will be downloaded from 
+https://raw.githubusercontent.com/sebastiansauer/pradadata/master/data-raw/germanlex.csv)
 
 ### Webscraper
 
@@ -48,4 +50,4 @@ the file are namely:
 - ```data_preprocessed.csv```
 - ```data_aspect_tokens.csv```
 
-spacy models, nltk sentence tokenizer and the sentiment lexicon will be downloaded as part of the code.
+
