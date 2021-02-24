@@ -13,6 +13,7 @@ Every module or package it relies on has to be imported at the beginning.
 The code that is actually executed is the one below 'if __name__ ...' (if run
 as script).
 """
+
 do_scraping = True
 do_processing = True
 do_annotation = True
