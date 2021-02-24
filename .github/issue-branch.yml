@@ -1,7 +1,20 @@
 autoCloseIssue: true
 branches:
-    - label: 
-        - bug
-        - documentation
-        - feature
-      name: develop
+  - label: 
+    - bug
+    name: develop
+  - label: 
+    - documentation
+    - feature
+    name: develop
+  - label: 
+    - documentation
+    name: develop
+  - label:
+    - feature
+    name: develop
+  - label: 
+    - documentation
+    - bug
+    - feature
+    name: develop
