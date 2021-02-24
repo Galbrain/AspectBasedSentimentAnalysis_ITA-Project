@@ -28,7 +28,8 @@ class AspectAnnotator:
             with open("src/data/aspectDict.json") as f:
                 self.keyWords = json.load(f)
         self.df = pd.DataFrame(
-            columns=["reviewnumber", "word_found", "sent_idx", "word_idx", "aspect"]
+            columns=["reviewnumber", "word_found",
+                     "sent_idx", "word_idx", "aspect"]
         )
 
     def loadCSV(self, filename: str = "data_preprocessed.csv") -> None:
@@ -38,7 +39,7 @@ class AspectAnnotator:
         Args:
             filename (str, optional): String of path to the preprocessed data. Defaults to "data_preprocessed.csv".
         """
-        self.data = pd.read_csv(self.path + filename)
+        self.data = pd.read_csv(self.path + filename, lineterminator="\n")
         tqdm.pandas(desc="Loading Tokens..")
         self.data["tokens"] = self.data["tokens"].progress_apply(
             lambda x: json.loads(x)
@@ -64,7 +65,8 @@ class AspectAnnotator:
                             aspects["sent_idx"] = i
                             aspects["word_idx"] = j
                             aspects["aspect"] = aspect
-                            self.df = self.df.append(aspects, ignore_index=True)
+                            self.df = self.df.append(
+                                aspects, ignore_index=True)
 
     def annotate(self) -> None:
         """
