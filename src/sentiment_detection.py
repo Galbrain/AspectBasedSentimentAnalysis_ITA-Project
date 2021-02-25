@@ -388,6 +388,8 @@ class SentimentDetector:
         self.df_aspect_tokens.progress_apply(lambda x: self.detectSentiment(x), axis=1)
 
     def saveCSV(self, filename: str = "data_aspects_tokens.csv"):
+        self.df_aspect_tokens["sentiment_words"] = self.df_aspect_tokens["sentiment_words"].apply(
+            lambda x: json.dumps(x))
         self.df_aspect_tokens.to_csv(self.path + filename, index=False)
 
 
