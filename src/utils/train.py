@@ -101,14 +101,14 @@ class Evaluator:
         sns.heatmap(cm, annot=True, fmt="d", cmap="Spectral")
         ax.set_xlabel('predicted label')
         ax.set_ylabel('true label')
-        fig.savefig('test')
+        fig.savefig('confusion_matrix')
 
         fig, ax = plt.subplots()
         x = self.train[0] + self.test[0]
         y = self.train[1] + self.test[1]
 
         ax.scatter(y, x)
-        fig.savefig('scatter')
+        fig.savefig('scatter_plot')
 
     def evaluate(self):
         predictions = self.model.predict(self.test[0])
