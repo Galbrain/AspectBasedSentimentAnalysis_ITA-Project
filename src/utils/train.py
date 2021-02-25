@@ -146,7 +146,7 @@ class Evaluator:
 
     def plot_results(self, predictions: list):
         """
-        creates and saves a confusion matrix and scatterplot
+        creates and saves a confusion matrix and boxplot
 
         Args:
             predictions (list): list containing the predicted labels for the test data
@@ -164,13 +164,15 @@ class Evaluator:
         fig, ax = plt.subplots()
         x = self.train[0] + self.test[0]
         y = self.train[1] + self.test[1]
-
-        ax.scatter(y, x)
-        fig.savefig("scatter_plot")
+        x = [i[0] for i in x]
+        y = [i for i in y]
+        results = pd.DataFrame({'polarity strength': x, 'true label': y})
+        sns.boxplot(data=results, x='true label', y='polarity strength')
+        fig.savefig("boxplot")
 
     def evaluate(self):
         """
-        performs evaluation of the results
+        performs evaluation of the results including visualization
         """        
         predictions = self.model.predict(self.test[0])
         accuracy = accuracy_score(self.test[1], predictions)
