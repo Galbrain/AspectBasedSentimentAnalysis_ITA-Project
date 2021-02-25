@@ -14,8 +14,14 @@ class Evaluator:
     """
 
     def __init__(self):
-        self.mapping = {0: 'negative', 1: 'negative', 2: 'neutral',
-                        3: 'neutral', 4: 'positive', 5: 'positive'}
+        self.mapping = {
+            0: "negative",
+            1: "negative",
+            2: "neutral",
+            3: "neutral",
+            4: "positive",
+            5: "positive",
+        }
         self.dataset = None
         self.train = None
         self.test = None
@@ -34,31 +40,41 @@ class Evaluator:
             pd.DataFrame: Dataframe with overall polarity for each aspect in a review
         """
 
-        data['review_polarity'] = data.groupby(
-            ['reviewnumber', 'aspect'],
-            as_index=False)['polarity_strength'].transform(lambda x: ','.join(x))
+        data["review_polarity"] = data.groupby(
+            ["reviewnumber", "aspect"], as_index=False
+        )["polarity_strength"].transform(lambda x: ",".join(x))
         data = data.drop(
-            columns=['sent_idx', 'word_idx', 'word_found',
-                     'polarity_strength', 'sentiment_words',
-                     'intensifier_words']).drop_duplicates()
+            columns=[
+                "sent_idx",
+                "word_idx",
+                "word_found",
+                "polarity_strength",
+                "sentiment_words",
+                "intensifier_words",
+            ]
+        ).drop_duplicates()
 
         def calculate_review_polarity(review_polarity):
-            review_polarity = review_polarity.replace('[', '')
-            review_polarity = review_polarity.replace(']', '')
-            review_polarity = review_polarity.split(',')
+            review_polarity = review_polarity.replace("[", "")
+            review_polarity = review_polarity.replace("]", "")
+            review_polarity = review_polarity.split(",")
             try:
-                review_polarity = np.mean([float(polarity)
-                                           for polarity in review_polarity])
+                review_polarity = np.mean(
+                    [float(polarity) for polarity in review_polarity]
+                )
             except ValueError:
                 review_polarity = np.nan
             return review_polarity
 
-        data['review_polarity'] = data['review_polarity'].apply(
-            lambda x: calculate_review_polarity(x))
+        data["review_polarity"] = data["review_polarity"].apply(
+            lambda x: calculate_review_polarity(x)
+        )
         data = data.dropna()
         return data
 
-    def read_data(self, path: str = 'src/data/data_aspects_tokens.csv') -> Tuple[list, list]:
+    def read_data(
+        self, path: str = "src/data/data_aspects_tokens.csv"
+    ) -> Tuple[list, list]:
         """
         reads csv data from specified path 
 
@@ -71,8 +87,8 @@ class Evaluator:
         data = pd.read_csv(path)
         data = self.summarize_review(data)
         self.dataset = data
-        x = data['review_polarity'].to_list()
-        y = data['true_label'].astype(int)
+        x = data["review_polarity"].to_list()
+        y = data["true_label"].astype(int)
 
         return x, y
 
@@ -141,16 +157,16 @@ class Evaluator:
         nbr_labels = len(set(self.test[1]))
         cm = conf.reshape(nbr_labels, nbr_labels)
         sns.heatmap(cm, annot=True, fmt="d", cmap="Spectral")
-        ax.set_xlabel('predicted label')
-        ax.set_ylabel('true label')
-        fig.savefig('confusion_matrix')
+        ax.set_xlabel("predicted label")
+        ax.set_ylabel("true label")
+        fig.savefig("confusion_matrix")
 
         fig, ax = plt.subplots()
         x = self.train[0] + self.test[0]
         y = self.train[1] + self.test[1]
 
         ax.scatter(y, x)
-        fig.savefig('scatter_plot')
+        fig.savefig("scatter_plot")
 
     def evaluate(self):
         """
@@ -158,5 +174,5 @@ class Evaluator:
         """        
         predictions = self.model.predict(self.test[0])
         accuracy = accuracy_score(self.test[1], predictions)
-        print('Accuracy:', str(accuracy * 100) + '%')
+        print("Accuracy:", str(accuracy * 100) + "%")
         self.plot_results(predictions)
