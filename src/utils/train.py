@@ -18,10 +18,36 @@ class Evaluator:
         self.test = None
         self.model = None
 
+    def summarize_review(self, data):
+        data['review_polarity'] = data.groupby(
+            ['reviewnumber', 'aspect'],
+            as_index=False)['polarity_strength'].transform(lambda x: ','.join(x))
+        data = data.drop(
+            columns=['sent_idx', 'word_idx', 'word_found',
+                     'polarity_strength', 'sentiment_words',
+                     'intensifier_words']).drop_duplicates()
+
+        def calculate_review_polarity(review_polarity):
+            review_polarity = review_polarity.replace('[', '')
+            review_polarity = review_polarity.replace(']', '')
+            review_polarity = review_polarity.split(',')
+            try:
+                review_polarity = sum([float(polarity) for polarity in review_polarity])
+            except ValueError:
+                review_polarity = np.nan
+            return review_polarity
+
+        data['review_polarity'] = data['review_polarity'].apply(
+            lambda x: calculate_review_polarity(x))
+        data = data.dropna()
+        return data
+
     def read_data(self, path='src/data/data_aspects_tokens.csv'):
 
         data = pd.read_csv(path)
-        x = data['polarity_strength'].to_list()
+        data = self.summarize_review(data)
+        self.dataset = data
+        x = data['review_polarity'].to_list()
         y = data['true_label'].astype(int)
 
         return x, y
@@ -33,14 +59,10 @@ class Evaluator:
         y_train = list()
 
         for elem_x, elem_y in zip(x, y):
-            elem_x = elem_x.replace(']', '')
-            elem_x = elem_x.replace('[', '')
-            try:
-                elem_x = float(elem_x)
-                if y_train.count(self.mapping[elem_y]) < 400:
+            if y_train.count(self.mapping[elem_y]) < 50:
                     x_train.append([elem_x])
                     y_train.append(self.mapping[elem_y])
-                elif y_test.count(self.mapping[elem_y]) < 100:
+            elif y_test.count(self.mapping[elem_y]) < 20:
                     x_test.append([elem_x])
                     y_test.append(self.mapping[elem_y])
             except ValueError:
@@ -48,7 +70,7 @@ class Evaluator:
 
         print(
             'used ', str(((len(x_train) + len(x_test)) / len(x)) * 100) + '%',
-            'of all sentences')
+            'of all reviews')
 
         return x_train, y_train, x_test, y_test
 
@@ -68,7 +90,8 @@ class Evaluator:
         fig, ax = plt.subplots()
         cm = confusion_matrix(self.test[1], predictions)
         conf = confusion_matrix(self.test[1], predictions).ravel()
-        cm = conf.reshape(3, 3)
+        nbr_labels = len(set(self.test[1]))
+        cm = conf.reshape(nbr_labels, nbr_labels)
         sns.heatmap(cm, annot=True, fmt="d", cmap="Spectral")
         ax.set_xlabel('predicted label')
         ax.set_ylabel('true label')
