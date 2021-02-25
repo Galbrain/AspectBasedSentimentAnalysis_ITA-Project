@@ -384,6 +384,15 @@ class SentimentDetector:
         if not self.loadSpacyModel():
             return
 
+        true_labels = list()
+        for index, row in self.df_aspect_tokens.iterrows():
+            true_labels.append(
+                self.df_preprocessed.iloc[row["reviewnumber"]][
+                    self.df_aspect_tokens.iloc[index]["aspect"]
+                ]
+            )
+        self.df_aspect_tokens["true_label"] = true_labels
+
         tqdm.pandas(desc="Looking up Sentiments...")
         self.df_aspect_tokens.progress_apply(lambda x: self.detectSentiment(x), axis=1)
 

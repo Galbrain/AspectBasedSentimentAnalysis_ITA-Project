@@ -1,4 +1,5 @@
 import json
+from os import replace
 
 import pandas as pd
 import requests
@@ -32,7 +33,8 @@ class WebScraper:
                 "review_text_raw": i["content"]
                 .replace("<br />", "")
                 .replace("&quot;", "")
-                .replace("\n", " "),
+                .replace("\n", " ")
+                .replace("\r", " "),
                 "Grafik": i["ratingDetail"]["score_graphics"],
                 "Sound": i["ratingDetail"]["score_sound"],
                 "Steuerung": i["ratingDetail"]["score_gameplay"],
