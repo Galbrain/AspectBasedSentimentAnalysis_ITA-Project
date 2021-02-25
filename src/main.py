@@ -5,6 +5,7 @@ import requests
 from sentiment_detection import SentimentDetector
 from utils.aspect_annotator import AspectAnnotator
 from utils.preprocessing import Preprocessor
+from utils.train import Evaluator
 from utils.web_scraper import WebScraper
 
 """
@@ -18,6 +19,7 @@ do_scraping = True
 do_processing = True
 do_annotation = True
 do_sentimentanalysis = True
+do_evaluation = True
 
 Scraper = None
 Preper = None
@@ -50,3 +52,9 @@ if __name__ == "__main__":
         Detector = SentimentDetector()
         Detector.run()
         Detector.saveCSV()
+
+    if do_evaluation:
+        evaluator = Evaluator()
+        evaluator.generate_train_test()
+        evaluator.train_model()
+        evaluator.evaluate()
