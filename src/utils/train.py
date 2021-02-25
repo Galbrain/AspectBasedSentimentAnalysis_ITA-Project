@@ -97,6 +97,13 @@ class Evaluator:
         ax.set_ylabel('true label')
         fig.savefig('test')
 
+        fig, ax = plt.subplots()
+        x = self.train[0] + self.test[0]
+        y = self.train[1] + self.test[1]
+
+        ax.scatter(y, x)
+        fig.savefig('scatter')
+
     def evaluate(self):
         predictions = self.model.predict(self.test[0])
         accuracy = accuracy_score(self.test[1], predictions)
