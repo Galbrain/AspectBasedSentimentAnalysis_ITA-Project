@@ -55,24 +55,28 @@ class Evaluator:
         return x, y
 
     def sample_data(self, x, y):
+
+        y = [self.mapping[i] for i in y]
+
         x_train = list()
         x_test = list()
         y_test = list()
         y_train = list()
 
-        for elem_x, elem_y in zip(x, y):
-            if y_train.count(self.mapping[elem_y]) < 50:
-                    x_train.append([elem_x])
-                    y_train.append(self.mapping[elem_y])
-            elif y_test.count(self.mapping[elem_y]) < 20:
-                    x_test.append([elem_x])
-                    y_test.append(self.mapping[elem_y])
-            except ValueError:
-                pass
+        min_label = min([y.count(i) for i in list(set(y))])
+        nbr_labels = len(set(y))
+        data_size = min_label * len(set(y))
 
-        print(
-            'used ', str(((len(x_train) + len(x_test)) / len(x)) * 100) + '%',
-            'of all reviews')
+        train_size = int(0.66 * data_size)
+        test_size = data_size - train_size
+
+        for elem_x, elem_y in zip(x, y):
+            if y_train.count(elem_y) < int(train_size / nbr_labels):
+                    x_train.append([elem_x])
+                y_train.append(elem_y)
+            elif y_test.count(elem_y) < int(test_size / nbr_labels):
+                    x_test.append([elem_x])
+                y_test.append(elem_y)
 
         return x_train, y_train, x_test, y_test
 
