@@ -28,8 +28,7 @@ class AspectAnnotator:
             with open("src/data/aspectDict.json") as f:
                 self.keyWords = json.load(f)
         self.df = pd.DataFrame(
-            columns=["reviewnumber", "word_found",
-                     "sent_idx", "word_idx", "aspect"]
+            columns=["reviewnumber", "word_found", "sent_idx", "word_idx", "aspect"]
         )
 
     def loadCSV(self, filename: str = "data_preprocessed.csv") -> None:
@@ -65,8 +64,7 @@ class AspectAnnotator:
                             aspects["sent_idx"] = i
                             aspects["word_idx"] = j
                             aspects["aspect"] = aspect
-                            self.df = self.df.append(
-                                aspects, ignore_index=True)
+                            self.df = self.df.append(aspects, ignore_index=True)
 
     def annotate(self) -> None:
         """

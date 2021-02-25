@@ -29,11 +29,11 @@ class Evaluator:
 
     def summarize_review(self, data: pd.DataFrame) -> pd.DataFrame:
         """
-        calculates overall sentiment for each aspect of a single review 
+        calculates overall sentiment for each aspect of a single review
         using the polarity strength of each occurence of the aspect
 
         Args:
-            data (pd.DataFrame): Dataframe containing information about 
+            data (pd.DataFrame): Dataframe containing information about
             the aspects, their polarities and their respective review
 
         Returns:
@@ -76,7 +76,7 @@ class Evaluator:
         self, path: str = "src/data/data_aspects_tokens.csv"
     ) -> Tuple[list, list]:
         """
-        reads csv data from specified path 
+        reads csv data from specified path
 
         Args:
             path (str, optional): Path to the csv file. Defaults to 'src/data/data_aspects_tokens.csv'.
@@ -119,10 +119,11 @@ class Evaluator:
 
         for elem_x, elem_y in zip(x, y):
             if y_train.count(elem_y) < int(train_size / nbr_labels):
-                    x_train.append([elem_x])
+                x_train.append([elem_x])
                 y_train.append(elem_y)
+
             elif y_test.count(elem_y) < int(test_size / nbr_labels):
-                    x_test.append([elem_x])
+                x_test.append([elem_x])
                 y_test.append(elem_y)
 
         return x_train, y_train, x_test, y_test
@@ -166,14 +167,14 @@ class Evaluator:
         y = self.train[1] + self.test[1]
         x = [i[0] for i in x]
         y = [i for i in y]
-        results = pd.DataFrame({'polarity strength': x, 'true label': y})
-        sns.boxplot(data=results, x='true label', y='polarity strength')
+        results = pd.DataFrame({"polarity strength": x, "true label": y})
+        sns.boxplot(data=results, x="true label", y="polarity strength")
         fig.savefig("boxplot")
 
     def evaluate(self):
         """
         performs evaluation of the results including visualization
-        """        
+        """
         predictions = self.model.predict(self.test[0])
         accuracy = accuracy_score(self.test[1], predictions)
         print("Accuracy:", str(accuracy * 100) + "%")
