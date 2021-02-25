@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 import seaborn as sns
 from sklearn.linear_model import LogisticRegression
@@ -32,7 +33,8 @@ class Evaluator:
             review_polarity = review_polarity.replace(']', '')
             review_polarity = review_polarity.split(',')
             try:
-                review_polarity = sum([float(polarity) for polarity in review_polarity])
+                review_polarity = np.mean([float(polarity)
+                                           for polarity in review_polarity])
             except ValueError:
                 review_polarity = np.nan
             return review_polarity
