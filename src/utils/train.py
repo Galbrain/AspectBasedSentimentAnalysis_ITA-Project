@@ -6,6 +6,9 @@ from sklearn.metrics import accuracy_score, confusion_matrix
 
 
 class Evaluator:
+    """
+    Evaluator Class
+    """
 
     def __init__(self):
         self.mapping = {0: 'negative', 1: 'negative', 2: 'neutral',
@@ -40,7 +43,7 @@ class Evaluator:
                 elif y_test.count(self.mapping[elem_y]) < 100:
                     x_test.append([elem_x])
                     y_test.append(self.mapping[elem_y])
-            except:
+            except ValueError:
                 pass
 
         print(
@@ -49,7 +52,7 @@ class Evaluator:
 
         return x_train, y_train, x_test, y_test
 
-    def generate_train_test_from_path(self):
+    def generate_train_test(self):
         x, y = self.read_data()
         x_train, y_train, x_test, y_test = self.sample_data(x, y)
         self.train = (x_train, y_train)
@@ -76,9 +79,3 @@ class Evaluator:
         accuracy = accuracy_score(self.test[1], predictions)
         print('Accuracy:', str(accuracy * 100) + '%')
         self.plot_results(predictions)
-
-
-evaluator = Evaluator()
-evaluator.generate_train_test_from_path()
-evaluator.train_model()
-evaluator.evaluate()
